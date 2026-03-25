@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: challengeone-db
+  namespace: challengeone
+  labels:
+    app: challengeone-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: challengeone-db
+  template:
+    metadata:
+      labels:
+        app: challengeone-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: challengeone-db-secret
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: pgdata-pvc
