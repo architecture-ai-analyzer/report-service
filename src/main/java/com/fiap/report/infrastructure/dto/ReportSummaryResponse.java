@@ -19,4 +19,15 @@ public class ReportSummaryResponse {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    public static ReportSummaryResponse from(com.fiap.report.domain.report.AnalysisReport report) {
+        return ReportSummaryResponse.builder()
+                .id(report.getId())
+                .diagramId(report.getDiagramId())
+                .userId(report.getUserId())
+                .status(report.getStatus().name())
+                .createdAt(report.getGeneratedAt())
+                .updatedAt(report.getGeneratedAt())
+                .build();
+    }
 }

@@ -45,6 +45,15 @@ public class AnalysisReportRepositoryImpl implements AnalysisReportGateway {
     }
 
     @Override
+    public List<com.fiap.report.domain.report.AnalysisReport> findAll() {
+        log.debug("Finding all reports");
+        return springRepository.findAll()
+                .stream()
+                .map(AnalysisReportEntity::toDomain)
+                .toList();
+    }
+
+    @Override
     public boolean existsById(UUID id) {
         log.debug("Checking if report exists: {}", id);
         return springRepository.existsById(id);

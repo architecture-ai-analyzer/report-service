@@ -12,6 +12,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExtractedComponent {
+    private String id;
     private String name;
     private String type;
     private java.util.List<String> connections;

@@ -1,43 +1,48 @@
 package com.fiap.report.infrastructure.gateway.impl;
 
+import com.amazonaws.services.sqs.AmazonSQSAsync;
+import com.amazonaws.services.sqs.model.SendMessageRequest;
+import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.fiap.report.gateway.StatusGateway;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cloud.aws.messaging.core.QueueMessagingTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
 @Slf4j
-@Component
+@Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "aws.access.key")
 public class SQSStatusGatewayImpl implements StatusGateway {
 
-    private final QueueMessagingTemplate queueMessagingTemplate;
-    private final ObjectMapper objectMapper;
+    private final AmazonSQSAsync amazonSQS;
+
+    @Value("${aws.sqs.status-update-queue}")
+    private String statusUpdateQueueUrl;
 
     @Override
     public void updateStatus(UUID diagramId, String status) {
-        try {
-            StatusUpdateMessage message = StatusUpdateMessage.builder()
-                    .diagramId(diagramId)
-                    .status(status)
-                    .timestamp(java.time.Instant.now().toString())
-                    .build();
+        log.info("Updating status for diagram {}: {}", diagramId, status);
 
-            String messageJson = objectMapper.writeValueAsString(message);
-            
-            queueMessagingTemplate.convertAndSend(
-                    System.getenv("STATUS_UPDATE_QUEUE"), 
-                    messageJson
+        try {
+            String messageBody = String.format(
+                "{\"diagramId\":\"%s\",\"status\":\"%s\",\"timestamp\":\"%s\"}",
+                diagramId, status, java.time.Instant.now()
             );
 
-            log.info("Status update sent for diagram {}: {}", diagramId, status);
+            SendMessageRequest request = new SendMessageRequest()
+                    .withQueueUrl(statusUpdateQueueUrl)
+                    .withMessageBody(messageBody);
+
+            SendMessageResult result = amazonSQS.sendMessage(request);
+            log.info("Status update sent to SQS: {}", result.getMessageId());
 
         } catch (Exception e) {
-            log.error("Error sending status update for diagram: {}", diagramId, e);
-            throw new RuntimeException("Failed to send status update", e);
+            log.error("Error updating status for diagram: {}", diagramId, e);
+            throw new RuntimeException("Failed to update status", e);
         }
     }
 }
