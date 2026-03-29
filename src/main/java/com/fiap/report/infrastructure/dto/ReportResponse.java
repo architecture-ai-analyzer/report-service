@@ -1,53 +1,82 @@
 package com.fiap.report.infrastructure.dto;
 
 import com.fiap.report.domain.report.AnalysisReport;
+import com.fiap.report.domain.recommendation.RecommendationData;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReportResponse {
-    private UUID id;
-    private UUID diagramId;
-    private String userId;
-    private List<ComponentResponse> components;
-    private List<RiskResponse> risks;
-    private List<RecommendationResponse> recommendations;
-    private String aiModelVersion;
-    private Double confidenceScore;
-    private Long processingTimeMs;
-    private String status;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-
+    private String generatedAt;
+    private SummaryResponse summary;
+    private List<ComponentResponse> detectedComponents;
+    private SecurityAnalysisResponse securityAnalysis;
+    private ArchitectureAnalysisResponse architectureAnalysis;
+    private PerformanceAnalysisResponse performanceAnalysis;
+    private List<Recommendation> recommendations;
+    
     public static ReportResponse from(AnalysisReport report) {
+        List<ComponentResponse> components = report.getComponents() != null 
+                ? report.getComponents().stream().map(ComponentResponse::from).toList()
+                : List.of();
+        
+        List<RiskResponse> risks = report.getRisks() != null 
+                ? report.getRisks().stream().map(RiskResponse::from).toList()
+                : List.of();
+        
+        List<Recommendation> recommendations = report.getRecommendations() != null 
+                ? report.getRecommendations().stream().map(Recommendation::from).toList()
+                : List.of();
+        
+        SummaryResponse summary = components.isEmpty() || risks.isEmpty() 
+                ? SummaryResponse.defaultSummary()
+                : SummaryResponse.from(components.size(), risks);
+        
+        SecurityAnalysisResponse securityAnalysis = SecurityAnalysisResponse.from(risks);
+        ArchitectureAnalysisResponse architectureAnalysis = ArchitectureAnalysisResponse.from(components);
+        PerformanceAnalysisResponse performanceAnalysis = PerformanceAnalysisResponse.from(components);
+        
         return ReportResponse.builder()
-                .id(report.getId())
-                .diagramId(report.getDiagramId())
-                .userId(report.getUserId())
-                .components(report.getComponents().stream()
-                        .map(ComponentResponse::from)
-                        .toList())
-                .risks(report.getRisks().stream()
-                        .map(RiskResponse::from)
-                        .toList())
-                .recommendations(report.getRecommendations().stream()
-                        .map(RecommendationResponse::from)
-                        .toList())
-                .aiModelVersion(report.getAiModelVersion())
-                .confidenceScore(report.getConfidenceScore())
-                .processingTimeMs(report.getProcessingTimeMs())
-                .status(report.getStatus().name())
-                .createdAt(report.getGeneratedAt())
-                .updatedAt(report.getGeneratedAt())
+                .generatedAt(report.getGeneratedAt() != null ? report.getGeneratedAt().toString() : "2026-03-29T06:04:20.698397Z")
+                .summary(summary)
+                .detectedComponents(components)
+                .securityAnalysis(securityAnalysis)
+                .architectureAnalysis(architectureAnalysis)
+                .performanceAnalysis(performanceAnalysis)
+                .recommendations(recommendations)
+                .build();
+    }
+}
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+class Recommendation {
+    private String title;
+    private String description;
+    private String priority;
+    private String category;
+    private String effort;
+    private String impact;
+    private List<String> steps;
+    
+    public static Recommendation from(RecommendationData recommendation) {
+        return Recommendation.builder()
+                .title(recommendation.getDescription())
+                .description(recommendation.getRationale())
+                .priority(recommendation.getPriority() != null ? recommendation.getPriority().getDisplayName() : "MEDIUM")
+                .category(recommendation.getType() != null ? recommendation.getType().getDisplayName() : "MONITORING")
+                .effort(recommendation.getEffort() != null ? recommendation.getEffort().getDisplayName() : "MEDIUM")
+                .impact("Melhora a arquitetura e segurança")
+                .steps(recommendation.getSteps())
                 .build();
     }
 }

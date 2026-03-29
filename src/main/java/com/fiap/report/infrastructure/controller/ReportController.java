@@ -25,6 +25,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/reports")
 @RequiredArgsConstructor
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"})
 public class ReportController {
 
     private final CreateReportUseCase createReportUseCase;
@@ -192,23 +193,22 @@ public class ReportController {
                 "%%EOF";
     }
 
-    // Métodos mock para simular dados da IA
     private List<ExtractedComponent> generateMockComponents() {
         return List.of(
                 ExtractedComponent.builder()
-                        .id("comp-api-gateway")  // ← ID único do componente
+                        .id("comp-api-gateway")
                         .name("API Gateway")
-                        .type("API")  // Corrigido: API_GATEWAY -> API
+                        .type("API")
                         .connections(List.of("user-service", "order-service"))
                         .properties(Map.of(
                                 "protocol", "REST",
                                 "rateLimit", "1000 req/s"
                         ))
                         .technology("Spring Cloud Gateway")
-                        .description("Gateway for routing requests")
+                        .description("Gateway para roteamento de requisições")
                         .build(),
                 ExtractedComponent.builder()
-                        .id("comp-user-service")  // ← ID único do componente
+                        .id("comp-user-service")
                         .name("User Service")
                         .type("MICROSERVICE")
                         .connections(List.of("database"))
@@ -217,10 +217,10 @@ public class ReportController {
                                 "framework", "Spring Boot"
                         ))
                         .technology("Java Spring Boot")
-                        .description("User management service")
+                        .description("Serviço de gerenciamento de usuários")
                         .build(),
                 ExtractedComponent.builder()
-                        .id("comp-database")  // ← ID único do componente
+                        .id("comp-database")
                         .name("PostgreSQL Database")
                         .type("DATABASE")
                         .connections(List.of("user-service", "order-service"))
@@ -229,7 +229,7 @@ public class ReportController {
                                 "maxConnections", "100"
                         ))
                         .technology("PostgreSQL")
-                        .description("Main application database")
+                        .description("Banco de dados principal da aplicação")
                         .build()
         );
     }
@@ -238,31 +238,31 @@ public class ReportController {
         return List.of(
                 IdentifiedRisk.builder()
                         .id("risk-1")
-                        .description("Single point of failure in database")
+                        .description("Ponto único de falha no banco de dados")
                         .level("HIGH")
                         .affectedComponent("database")
-                        .category("RELIABILITY")  // Corrigido: AVAILABILITY -> RELIABILITY
+                        .category("RELIABILITY")
                         .mitigation(List.of(
-                                "Implement database clustering",
-                                "Add read replicas",
-                                "Setup automatic failover"
+                                "Implementar clustering no banco de dados",
+                                "Adicionar réplicas de leitura",
+                                "Configurar failover automático"
                         ))
                         .severityScore(8)
-                        .impact("Service downtime if database fails")
+                        .impact("Indisponibilidade do serviço se o banco falhar")
                         .build(),
                 IdentifiedRisk.builder()
                         .id("risk-2")
-                        .description("No authentication in API Gateway")
+                        .description("Sem autenticação no API Gateway")
                         .level("CRITICAL")
                         .affectedComponent("API Gateway")
                         .category("SECURITY")
                         .mitigation(List.of(
-                                "Implement OAuth 2.0",
-                                "Add JWT validation",
-                                "Setup rate limiting"
+                                "Implementar OAuth 2.0",
+                                "Adicionar validação JWT",
+                                "Configurar rate limiting"
                         ))
                         .severityScore(9)
-                        .impact("Unauthorized access to services")
+                        .impact("Acesso não autorizado aos serviços")
                         .build()
         );
     }
@@ -271,30 +271,30 @@ public class ReportController {
         return List.of(
                 GeneratedRecommendation.builder()
                         .id("rec-1")
-                        .description("Implement circuit breaker pattern")
+                        .description("Implementar padrão circuit breaker")
                         .targetComponent("API Gateway")
-                        .type("RELIABILITY")  // Corrigido: RESILIENCE -> RELIABILITY
+                        .type("RELIABILITY")
                         .priority("HIGH")
-                        .rationale("Prevents cascade failures between services")
+                        .rationale("Previne falhas em cascata entre serviços")
                         .effort("MEDIUM")
                         .steps(List.of(
-                                "Add Hystrix or Resilience4j",
-                                "Configure fallback methods",
-                                "Setup monitoring and alerts"
+                                "Adicionar Hystrix ou Resilience4j",
+                                "Configurar métodos de fallback",
+                                "Configurar monitoramento e alertas"
                         ))
                         .build(),
                 GeneratedRecommendation.builder()
                         .id("rec-2")
-                        .description("Add distributed tracing")
+                        .description("Adicionar tracing distribuído")
                         .targetComponent("All Services")
                         .type("MONITORING")
                         .priority("MEDIUM")
-                        .rationale("Improve observability and debugging")
+                        .rationale("Melhora observabilidade e debugging")
                         .effort("LOW")
                         .steps(List.of(
-                                "Integrate Zipkin or Jaeger",
-                                "Add tracing IDs to requests",
-                                "Setup centralized logging"
+                                "Integrar Zipkin ou Jaeger",
+                                "Adicionar IDs de tracing nas requisições",
+                                "Configurar logging centralizado"
                         ))
                         .build()
         );

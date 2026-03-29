@@ -23,22 +23,21 @@ public class TestController {
 
     @GetMapping("/safe")
     public ResponseEntity<String> safeEndpoint(@RequestParam String id) {
-        log.info("Safe endpoint called with id: {}", id);
+        log.info("Endpoint seguro chamado com id: {}", id);
         
         try {
             UUID uuid = UUID.fromString(id);
-            return ResponseEntity.ok("Safe response for UUID: " + uuid.toString());
+            return ResponseEntity.ok("Resposta segura para UUID: " + uuid.toString());
         } catch (Exception e) {
-            log.error("Error in safe endpoint: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+            log.error("Erro no endpoint seguro: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body("Erro: " + e.getMessage());
         }
     }
 
     @PostMapping("/simulate-ai-response")
     public ResponseEntity<String> simulateAIResponse() {
-        log.info("Simulating AI analysis response...");
+        log.info("Simulando resposta da análise de IA...");
         
-        // Criar dados de teste simulando retorno da IA
         AIAnalysisResult aiResult = AIAnalysisResult.builder()
                 .diagramId(UUID.randomUUID())
                 .userId("test-user-123")
@@ -51,15 +50,14 @@ public class TestController {
                 .build();
 
         try {
-            // Executar o use case como se viesse do listener
             var report = createReportUseCase.execute(aiResult.getDiagramId(), aiResult);
             
-            log.info("Test report created successfully: {}", report.getId());
-            return ResponseEntity.ok("Test report created with ID: " + report.getId());
+            log.info("Relatório de teste criado com sucesso: {}", report.getId());
+            return ResponseEntity.ok("Relatório de teste criado com ID: " + report.getId());
             
         } catch (Exception e) {
-            log.error("Error creating test report", e);
-            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+            log.error("Erro ao criar relatório de teste", e);
+            return ResponseEntity.badRequest().body("Erro: " + e.getMessage());
         }
     }
 
@@ -74,7 +72,7 @@ public class TestController {
                             "rateLimit", "1000 req/s"
                     ))
                     .technology("Spring Cloud Gateway")
-                    .description("Gateway for routing requests")
+                    .description("Gateway para roteamento de requisições")
                     .build(),
             ExtractedComponent.builder()
                     .name("User Service")
@@ -85,7 +83,7 @@ public class TestController {
                             "framework", "Spring Boot"
                     ))
                     .technology("Java Spring Boot")
-                    .description("User management service")
+                    .description("Serviço de gerenciamento de usuários")
                     .build()
         );
     }
@@ -94,31 +92,31 @@ public class TestController {
         return List.of(
             IdentifiedRisk.builder()
                     .id("risk-1")
-                    .description("Single point of failure in database")
+                    .description("Ponto único de falha no banco de dados")
                     .level("HIGH")
                     .affectedComponent("database")
                     .category("AVAILABILITY")
                     .mitigation(List.of(
-                            "Implement database clustering",
-                            "Add read replicas",
-                            "Setup automatic failover"
+                            "Implementar clustering no banco de dados",
+                            "Adicionar réplicas de leitura",
+                            "Configurar failover automático"
                     ))
                     .severityScore(8)
-                    .impact("Service downtime if database fails")
+                    .impact("Indisponibilidade do serviço se o banco falhar")
                     .build(),
             IdentifiedRisk.builder()
                     .id("risk-2")
-                    .description("No authentication in API Gateway")
+                    .description("Sem autenticação no API Gateway")
                     .level("CRITICAL")
                     .affectedComponent("API Gateway")
                     .category("SECURITY")
                     .mitigation(List.of(
-                            "Implement OAuth 2.0",
-                            "Add JWT validation",
-                            "Setup rate limiting"
+                            "Implementar OAuth 2.0",
+                            "Adicionar validação JWT",
+                            "Configurar rate limiting"
                     ))
                     .severityScore(9)
-                    .impact("Unauthorized access to services")
+                    .impact("Acesso não autorizado aos serviços")
                     .build()
         );
     }
@@ -127,30 +125,30 @@ public class TestController {
         return List.of(
             GeneratedRecommendation.builder()
                     .id("rec-1")
-                    .description("Implement circuit breaker pattern")
+                    .description("Implementar padrão circuit breaker")
                     .targetComponent("API Gateway")
                     .type("RESILIENCE")
                     .priority("HIGH")
-                    .rationale("Prevents cascade failures between services")
+                    .rationale("Previne falhas em cascata entre serviços")
                     .effort("MEDIUM")
                     .steps(List.of(
-                            "Add Hystrix or Resilience4j",
-                            "Configure fallback methods",
-                            "Setup monitoring and alerts"
+                            "Adicionar Hystrix ou Resilience4j",
+                            "Configurar métodos de fallback",
+                            "Configurar monitoramento e alertas"
                     ))
                     .build(),
             GeneratedRecommendation.builder()
                     .id("rec-2")
-                    .description("Add distributed tracing")
+                    .description("Adicionar tracing distribuído")
                     .targetComponent("All Services")
                     .type("MONITORING")
                     .priority("MEDIUM")
-                    .rationale("Improve observability and debugging")
+                    .rationale("Melhora observabilidade e debugging")
                     .effort("LOW")
                     .steps(List.of(
-                            "Integrate Zipkin or Jaeger",
-                            "Add tracing IDs to requests",
-                            "Setup centralized logging"
+                            "Integrar Zipkin ou Jaeger",
+                            "Adicionar IDs de tracing nas requisições",
+                            "Configurar logging centralizado"
                     ))
                     .build()
         );
