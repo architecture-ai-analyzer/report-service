@@ -37,16 +37,16 @@ public class AnalysisReportEntity {
     private String userId;
 
     @Column(name = "components", columnDefinition = "jsonb")
-    @Convert(converter = ComponentDataListConverter.class)
-    private List<ComponentData> components;
+@Convert(converter = ComponentDataListConverter.class)
+private List<ComponentData> components;
 
-    @Column(name = "risks", columnDefinition = "jsonb")
-    @Convert(converter = RiskDataListConverter.class)
-    private List<RiskData> risks;
+@Column(name = "risks", columnDefinition = "jsonb")
+@Convert(converter = RiskDataListConverter.class)
+private List<RiskData> risks;
 
-    @Column(name = "recommendations", columnDefinition = "jsonb")
-    @Convert(converter = RecommendationDataListConverter.class)
-    private List<RecommendationData> recommendations;
+@Column(name = "recommendations", columnDefinition = "jsonb")
+@Convert(converter = RecommendationDataListConverter.class)
+private List<RecommendationData> recommendations;
 
     @Column(name = "generated_at", nullable = false)
     private LocalDateTime generatedAt;

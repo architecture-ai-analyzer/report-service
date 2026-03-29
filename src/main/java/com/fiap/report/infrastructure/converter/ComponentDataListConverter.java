@@ -25,17 +25,13 @@ public class ComponentDataListConverter implements AttributeConverter<List<Compo
 
     @Override
     public String convertToDatabaseColumn(List<ComponentData> attribute) {
-        log.info("🔄 Converting components to JSON: {} items", attribute != null ? attribute.size() : 0);
         if (attribute == null || attribute.isEmpty()) {
-            return null;
+            return "[]";
         }
         try {
-            String json = objectMapper.writeValueAsString(attribute);
-            log.info("✅ Converted to JSON: {}", json);
-            return json;
+            return objectMapper.writeValueAsString(attribute);
         } catch (JsonProcessingException e) {
-            log.error("Error converting components to JSON", e);
-            return null;
+            return "[]";
         }
     }
 
@@ -47,7 +43,6 @@ public class ComponentDataListConverter implements AttributeConverter<List<Compo
         try {
             return objectMapper.readValue(dbData, new TypeReference<List<ComponentData>>() {});
         } catch (JsonProcessingException e) {
-            log.error("Error converting JSON to components", e);
             return List.of();
         }
     }

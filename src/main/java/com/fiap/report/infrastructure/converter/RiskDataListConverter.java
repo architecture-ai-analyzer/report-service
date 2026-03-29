@@ -26,13 +26,12 @@ public class RiskDataListConverter implements AttributeConverter<List<RiskData>,
     @Override
     public String convertToDatabaseColumn(List<RiskData> attribute) {
         if (attribute == null || attribute.isEmpty()) {
-            return null;
+            return "[]";
         }
         try {
             return objectMapper.writeValueAsString(attribute);
         } catch (JsonProcessingException e) {
-            log.error("Error converting risks to JSON", e);
-            return null;
+            return "[]";
         }
     }
 
@@ -44,7 +43,6 @@ public class RiskDataListConverter implements AttributeConverter<List<RiskData>,
         try {
             return objectMapper.readValue(dbData, new TypeReference<List<RiskData>>() {});
         } catch (JsonProcessingException e) {
-            log.error("Error converting JSON to risks", e);
             return List.of();
         }
     }

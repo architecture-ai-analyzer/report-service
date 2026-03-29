@@ -26,13 +26,12 @@ public class RecommendationDataListConverter implements AttributeConverter<List<
     @Override
     public String convertToDatabaseColumn(List<RecommendationData> attribute) {
         if (attribute == null || attribute.isEmpty()) {
-            return null;
+            return "[]";
         }
         try {
             return objectMapper.writeValueAsString(attribute);
         } catch (JsonProcessingException e) {
-            log.error("Error converting recommendations to JSON", e);
-            return null;
+            return "[]";
         }
     }
 
@@ -44,7 +43,6 @@ public class RecommendationDataListConverter implements AttributeConverter<List<
         try {
             return objectMapper.readValue(dbData, new TypeReference<List<RecommendationData>>() {});
         } catch (JsonProcessingException e) {
-            log.error("Error converting JSON to recommendations", e);
             return List.of();
         }
     }
