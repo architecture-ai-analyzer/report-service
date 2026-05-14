@@ -21,4 +21,10 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="2" author="system">
+        <addColumn tableName="analysis_reports">
+            <column name="template_id" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

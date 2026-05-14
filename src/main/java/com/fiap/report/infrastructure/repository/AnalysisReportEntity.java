@@ -36,17 +36,20 @@ public class AnalysisReportEntity {
     @Column(name = "user_id", nullable = false)
     private String userId;
 
+    @Column(name = "template_id")
+    private String templateId;
+
     @Column(name = "components", columnDefinition = "jsonb")
-@Convert(converter = ComponentDataListConverter.class)
-private List<ComponentData> components;
+    @Convert(converter = ComponentDataListConverter.class)
+    private List<ComponentData> components;
 
-@Column(name = "risks", columnDefinition = "jsonb")
-@Convert(converter = RiskDataListConverter.class)
-private List<RiskData> risks;
+    @Column(name = "risks", columnDefinition = "jsonb")
+    @Convert(converter = RiskDataListConverter.class)
+    private List<RiskData> risks;
 
-@Column(name = "recommendations", columnDefinition = "jsonb")
-@Convert(converter = RecommendationDataListConverter.class)
-private List<RecommendationData> recommendations;
+    @Column(name = "recommendations", columnDefinition = "jsonb")
+    @Convert(converter = RecommendationDataListConverter.class)
+    private List<RecommendationData> recommendations;
 
     @Column(name = "generated_at", nullable = false)
     private LocalDateTime generatedAt;
@@ -88,6 +91,7 @@ private List<RecommendationData> recommendations;
                 .id(report.getId())
                 .diagramId(report.getDiagramId())
                 .userId(report.getUserId())
+                .templateId(report.getTemplateId())
                 .components(report.getComponents())
                 .risks(report.getRisks())
                 .recommendations(report.getRecommendations())
@@ -105,6 +109,7 @@ private List<RecommendationData> recommendations;
                 .id(id)
                 .diagramId(diagramId)
                 .userId(userId)
+                .templateId(templateId)
                 .components(components)
                 .risks(risks)
                 .recommendations(recommendations)

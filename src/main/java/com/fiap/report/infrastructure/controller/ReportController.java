@@ -33,35 +33,31 @@ public class ReportController {
     private final GetReportUseCase getReportUseCase;
     private final ListReportsUseCase listReportsUseCase;
 
-    // Endpoint principal que o frontend usa: POST /api/reports/{uploadId}
     @PostMapping("/{uploadId}")
     public ResponseEntity<ReportResponse> generateReport(
             @PathVariable String uploadId,
             @RequestBody Map<String, Object> requestData) {
-        
+
         log.info("Generating report for upload: {}", uploadId);
-        
+
         try {
-            // ✅ CORREÇÃO: Aceitar tanto UUID quanto string normal
             UUID diagramId;
             try {
                 diagramId = UUID.fromString(uploadId);
             } catch (IllegalArgumentException e) {
-                // Se não for UUID, criar um UUID consistente baseado na string
                 diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
             }
-            
-            // ✅ VERIFICAR SE JÁ EXISTE RELATÓRIO
+
             Optional<com.fiap.report.domain.report.AnalysisReport> existingReport = findReportByDiagramIdUseCase.execute(diagramId);
             if (existingReport.isPresent()) {
                 log.info("Report already exists for upload: {}, returning existing report: {}", uploadId, existingReport.get().getId());
                 return ResponseEntity.ok(ReportResponse.from(existingReport.get()));
             }
-            
-            // Simular dados da IA como se viesse do processamento
+
             AIAnalysisResult aiResult = AIAnalysisResult.builder()
-                    .diagramId(diagramId)  // ← Usando ID real do upload
+                    .diagramId(diagramId)
                     .userId((String) requestData.getOrDefault("userId", "default-user"))
+                    .templateId((String) requestData.get("templateId"))
                     .extractedComponents(generateMockComponents())
                     .identifiedRisks(generateMockRisks())
                     .generatedRecommendations(generateMockRecommendations())
@@ -71,26 +67,24 @@ public class ReportController {
                     .build();
 
             var report = createReportUseCase.execute(diagramId, aiResult);
-            
+
             log.info("Report generated successfully: {} for upload: {}", report.getId(), uploadId);
             return ResponseEntity.ok(ReportResponse.from(report));
-            
+
         } catch (Exception e) {
             log.error("Error generating report for upload: {}", uploadId, e);
             return ResponseEntity.badRequest().build();
         }
     }
 
-    // Endpoint para listar relatórios (usado em /reports)
     @GetMapping
     public ResponseEntity<List<ReportSummaryResponse>> listReports(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
+
         log.info("Listing reports - page: {}, size: {}", page, size);
-        
-        // TODO: Implementar paginação real
-        var reportsPage = listReportsUseCase.execute("default-user", 
+
+        var reportsPage = listReportsUseCase.execute("default-user",
                 PageRequest.of(page, size));
         List<ReportSummaryResponse> reports = reportsPage.getContent().stream()
                 .map(ReportSummaryResponse::from)
@@ -98,32 +92,27 @@ public class ReportController {
         return ResponseEntity.ok(reports);
     }
 
-    // Endpoint para obter relatório específico (usado em /reports/{uploadId})
     @GetMapping("/{uploadId}")
     public ResponseEntity<ReportResponse> getReport(@PathVariable String uploadId) {
         log.info("Getting report for upload: {}", uploadId);
 
         try {
-            // ✅ CORREÇÃO: Aceitar tanto UUID quanto string normal
             UUID diagramId;
             try {
                 diagramId = UUID.fromString(uploadId);
             } catch (IllegalArgumentException e) {
-                // Se não for UUID, criar um UUID consistente baseado na string
                 diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
             }
-            
-            // ✅ Forçar nova transação para evitar cache problems
+
             var report = getReportUseCase.execute(diagramId);
             return ResponseEntity.ok(ReportResponse.from(report));
-            
+
         } catch (Exception e) {
             log.error("Error getting report for upload: {} - Error: {}", uploadId, e.getMessage(), e);
             return ResponseEntity.notFound().build();
         }
     }
 
-    // Endpoint para status do processamento (usado em /status/{uploadId})
     @GetMapping("/{uploadId}/status")
     public ResponseEntity<Map<String, Object>> getProcessingStatus(@PathVariable String uploadId) {
         log.info("Getting status for upload: {}", uploadId);
@@ -137,15 +126,13 @@ public class ReportController {
         ));
     }
 
-    // Endpoint para download do relatório (usado no botão de download)
     @GetMapping("/{uploadId}/download")
     public ResponseEntity<byte[]> downloadReport(@PathVariable String uploadId) {
         log.info("Downloading report: {}", uploadId);
 
         try {
-            // ✅ CORREÇÃO: Gerar PDF válido
             String reportContent = generateValidPdfContent(uploadId);
-            
+
             return ResponseEntity.ok()
                     .header("Content-Type", "application/pdf")
                     .header("Content-Disposition", "attachment; filename=report-" + uploadId + ".pdf")
@@ -157,7 +144,6 @@ public class ReportController {
     }
 
     private String generateValidPdfContent(String uploadId) {
-        // PDF ultra-simples para teste
         return "%PDF-1.1\n" +
                 "1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj\n" +
                 "2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj\n" +
@@ -200,10 +186,7 @@ public class ReportController {
                         .name("API Gateway")
                         .type("API")
                         .connections(List.of("user-service", "order-service"))
-                        .properties(Map.of(
-                                "protocol", "REST",
-                                "rateLimit", "1000 req/s"
-                        ))
+                        .properties(Map.of("protocol", "REST", "rateLimit", "1000 req/s"))
                         .technology("Spring Cloud Gateway")
                         .description("Gateway para roteamento de requisições")
                         .build(),
@@ -212,10 +195,7 @@ public class ReportController {
                         .name("User Service")
                         .type("MICROSERVICE")
                         .connections(List.of("database"))
-                        .properties(Map.of(
-                                "port", "8081",
-                                "framework", "Spring Boot"
-                        ))
+                        .properties(Map.of("port", "8081", "framework", "Spring Boot"))
                         .technology("Java Spring Boot")
                         .description("Serviço de gerenciamento de usuários")
                         .build(),
@@ -224,10 +204,7 @@ public class ReportController {
                         .name("PostgreSQL Database")
                         .type("DATABASE")
                         .connections(List.of("user-service", "order-service"))
-                        .properties(Map.of(
-                                "version", "14",
-                                "maxConnections", "100"
-                        ))
+                        .properties(Map.of("version", "14", "maxConnections", "100"))
                         .technology("PostgreSQL")
                         .description("Banco de dados principal da aplicação")
                         .build()
@@ -242,11 +219,7 @@ public class ReportController {
                         .level("HIGH")
                         .affectedComponent("database")
                         .category("RELIABILITY")
-                        .mitigation(List.of(
-                                "Implementar clustering no banco de dados",
-                                "Adicionar réplicas de leitura",
-                                "Configurar failover automático"
-                        ))
+                        .mitigation(List.of("Implementar clustering no banco de dados", "Adicionar réplicas de leitura", "Configurar failover automático"))
                         .severityScore(8)
                         .impact("Indisponibilidade do serviço se o banco falhar")
                         .build(),
@@ -256,11 +229,7 @@ public class ReportController {
                         .level("CRITICAL")
                         .affectedComponent("API Gateway")
                         .category("SECURITY")
-                        .mitigation(List.of(
-                                "Implementar OAuth 2.0",
-                                "Adicionar validação JWT",
-                                "Configurar rate limiting"
-                        ))
+                        .mitigation(List.of("Implementar OAuth 2.0", "Adicionar validação JWT", "Configurar rate limiting"))
                         .severityScore(9)
                         .impact("Acesso não autorizado aos serviços")
                         .build()
@@ -277,11 +246,7 @@ public class ReportController {
                         .priority("HIGH")
                         .rationale("Previne falhas em cascata entre serviços")
                         .effort("MEDIUM")
-                        .steps(List.of(
-                                "Adicionar Hystrix ou Resilience4j",
-                                "Configurar métodos de fallback",
-                                "Configurar monitoramento e alertas"
-                        ))
+                        .steps(List.of("Adicionar Hystrix ou Resilience4j", "Configurar métodos de fallback", "Configurar monitoramento e alertas"))
                         .build(),
                 GeneratedRecommendation.builder()
                         .id("rec-2")
@@ -291,11 +256,7 @@ public class ReportController {
                         .priority("MEDIUM")
                         .rationale("Melhora observabilidade e debugging")
                         .effort("LOW")
-                        .steps(List.of(
-                                "Integrar Zipkin ou Jaeger",
-                                "Adicionar IDs de tracing nas requisições",
-                                "Configurar logging centralizado"
-                        ))
+                        .steps(List.of("Integrar Zipkin ou Jaeger", "Adicionar IDs de tracing nas requisições", "Configurar logging centralizado"))
                         .build()
         );
     }
