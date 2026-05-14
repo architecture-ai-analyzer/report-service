@@ -3,5 +3,5 @@ locals {
 }
 
 locals {
-  infra_kubernetes_state_path = "kubernetes/${var.environment}/terraform.tfstate"
+  infra_kubernetes_state_path = "v1/eks/${var.environment}/terraform.tfstate"
 }
