@@ -126,7 +126,7 @@ public class ReportController {
     // Endpoint para status do processamento (usado em /status/{uploadId})
     @GetMapping("/{uploadId}/status")
     public ResponseEntity<Map<String, Object>> getProcessingStatus(@PathVariable String uploadId) {
-        log.info("Getting status for upload: {}", uploadId);
+        log.info("Getting status for uploa: {}", uploadId);
 
         return ResponseEntity.ok(Map.of(
                 "id", uploadId,
