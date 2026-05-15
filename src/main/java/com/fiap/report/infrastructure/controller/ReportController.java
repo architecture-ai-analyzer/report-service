@@ -1,5 +1,7 @@
 package com.fiap.report.infrastructure.controller;
 
+import com.fiap.report.gateway.StatusGateway;
+import com.fiap.report.infrastructure.mapper.AIAnalysisMapper;
 import com.fiap.report.usecase.CreateReportUseCase;
 import com.fiap.report.usecase.FindReportByDiagramIdUseCase;
 import com.fiap.report.usecase.GetReportUseCase;
@@ -8,6 +10,7 @@ import com.fiap.report.usecase.dto.AIAnalysisResult;
 import com.fiap.report.usecase.dto.ExtractedComponent;
 import com.fiap.report.usecase.dto.IdentifiedRisk;
 import com.fiap.report.usecase.dto.GeneratedRecommendation;
+import com.fiap.report.infrastructure.dto.ProcessingStatusResponse;
 import com.fiap.report.infrastructure.dto.ReportResponse;
 import com.fiap.report.infrastructure.dto.ReportSummaryResponse;
 import lombok.RequiredArgsConstructor;
@@ -32,51 +35,43 @@ public class ReportController {
     private final FindReportByDiagramIdUseCase findReportByDiagramIdUseCase;
     private final GetReportUseCase getReportUseCase;
     private final ListReportsUseCase listReportsUseCase;
+    private final StatusGateway statusGateway;
+    private final AIAnalysisMapper aiAnalysisMapper;
 
-    // Endpoint principal que o frontend usa: POST /api/reports/{uploadId}
+    // Endpoint de ingestão de análise da IA (harness local / simulação do payload que deveria chegar via fila)
     @PostMapping("/{uploadId}")
     public ResponseEntity<ReportResponse> generateReport(
             @PathVariable String uploadId,
             @RequestBody Map<String, Object> requestData) {
-        
-        log.info("Generating report for upload: {}", uploadId);
-        
+
+        log.info("Receiving AI analysis payload for upload: {}", uploadId);
+
         try {
-            // ✅ CORREÇÃO: Aceitar tanto UUID quanto string normal
-            UUID diagramId;
-            try {
-                diagramId = UUID.fromString(uploadId);
-            } catch (IllegalArgumentException e) {
-                // Se não for UUID, criar um UUID consistente baseado na string
-                diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
-            }
-            
-            // ✅ VERIFICAR SE JÁ EXISTE RELATÓRIO
+            UUID diagramId = convertToUUID(uploadId);
+
             Optional<com.fiap.report.domain.report.AnalysisReport> existingReport = findReportByDiagramIdUseCase.execute(diagramId);
             if (existingReport.isPresent()) {
                 log.info("Report already exists for upload: {}, returning existing report: {}", uploadId, existingReport.get().getId());
                 return ResponseEntity.ok(ReportResponse.from(existingReport.get()));
             }
-            
-            // Simular dados da IA como se viesse do processamento
-            AIAnalysisResult aiResult = AIAnalysisResult.builder()
-                    .diagramId(diagramId)  // ← Usando ID real do upload
-                    .userId((String) requestData.getOrDefault("userId", "default-user"))
-                    .extractedComponents(generateMockComponents())
-                    .identifiedRisks(generateMockRisks())
-                    .generatedRecommendations(generateMockRecommendations())
-                    .modelVersion("gpt-4-vision-preview")
-                    .confidenceScore(0.92)
-                    .processingTimeMs(2500L)
-                    .build();
 
+            statusGateway.updateStatus(diagramId, "EM_PROCESSAMENTO");
+
+            AIAnalysisResult aiResult = buildAIAnalysisResult(diagramId, requestData);
             var report = createReportUseCase.execute(diagramId, aiResult);
-            
+
+            statusGateway.updateStatus(diagramId, "ANALISADO");
             log.info("Report generated successfully: {} for upload: {}", report.getId(), uploadId);
             return ResponseEntity.ok(ReportResponse.from(report));
-            
+
         } catch (Exception e) {
             log.error("Error generating report for upload: {}", uploadId, e);
+            try {
+                UUID diagramId = convertToUUID(uploadId);
+                statusGateway.updateStatus(diagramId, "ERRO");
+            } catch (Exception updateError) {
+                log.error("Error updating status to ERRO for upload: {}", uploadId, updateError);
+            }
             return ResponseEntity.badRequest().build();
         }
     }
@@ -125,16 +120,95 @@ public class ReportController {
 
     // Endpoint para status do processamento (usado em /status/{uploadId})
     @GetMapping("/{uploadId}/status")
-    public ResponseEntity<Map<String, Object>> getProcessingStatus(@PathVariable String uploadId) {
+    public ResponseEntity<ProcessingStatusResponse> getProcessingStatus(@PathVariable String uploadId) {
         log.info("Getting status for upload: {}", uploadId);
 
-        return ResponseEntity.ok(Map.of(
-                "id", uploadId,
-                "status", "ANALISADO",
-                "progress", 100,
-                "estimatedTimeRemaining", "0 minutos",
-                "currentStep", "Análise concluída"
-        ));
+        try {
+            UUID diagramId = convertToUUID(uploadId);
+            var reportOptional = findReportByDiagramIdUseCase.execute(diagramId);
+            if (reportOptional.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.ok(mapToProcessingStatusResponse(reportOptional.get()));
+        } catch (Exception e) {
+            log.error("Error getting processing status for upload: {} - {}", uploadId, e.getMessage(), e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    private AIAnalysisResult buildAIAnalysisResult(UUID diagramId, Map<String, Object> requestData) {
+        Map<String, Object> analysis = (Map<String, Object>) requestData.get("analysis");
+        Map<String, Object> metadata = (Map<String, Object>) requestData.get("metadata");
+
+        if (analysis == null || metadata == null) {
+            throw new IllegalArgumentException("Payload must include analysis and metadata sections.");
+        }
+
+        List<Map<String, Object>> componentsData = (List<Map<String, Object>>) analysis.get("components");
+        List<Map<String, Object>> risksData = (List<Map<String, Object>>) analysis.get("risks");
+        List<Map<String, Object>> recommendationsData = (List<Map<String, Object>>) analysis.get("recommendations");
+
+        List<ExtractedComponent> components = componentsData == null ? List.of() : componentsData.stream()
+                .map(aiAnalysisMapper::mapToComponent)
+                .toList();
+
+        List<IdentifiedRisk> risks = risksData == null ? List.of() : risksData.stream()
+                .map(aiAnalysisMapper::mapToRisk)
+                .toList();
+
+        List<GeneratedRecommendation> recommendations = recommendationsData == null ? List.of() : recommendationsData.stream()
+                .map(aiAnalysisMapper::mapToRecommendation)
+                .toList();
+
+        return AIAnalysisResult.builder()
+                .diagramId(diagramId)
+                .userId((String) metadata.getOrDefault("userId", "default-user"))
+                .extractedComponents(components)
+                .identifiedRisks(risks)
+                .generatedRecommendations(recommendations)
+                .modelVersion((String) metadata.getOrDefault("modelVersion", "unknown"))
+                .confidenceScore(((Number) metadata.getOrDefault("confidenceScore", 0.0)).doubleValue())
+                .processingTimeMs(((Number) metadata.getOrDefault("processingTimeMs", 0)).longValue())
+                .build();
+    }
+
+    private ProcessingStatusResponse mapToProcessingStatusResponse(com.fiap.report.domain.report.AnalysisReport report) {
+        var status = report.getStatus();
+        return ProcessingStatusResponse.builder()
+                .id(report.getDiagramId())
+                .status(status != null ? status.name() : "UNKNOWN")
+                .progress(mapProgress(status))
+                .estimatedTimeRemaining(status == null || status == com.fiap.report.domain.report.ReportStatus.ANALISADO ? "0 minutos" : "Desconhecido")
+                .currentStep(status != null ? status.getDisplayName() : "Status desconhecido")
+                .createdAt(report.getGeneratedAt())
+                .updatedAt(report.getGeneratedAt())
+                .build();
+    }
+
+    private int mapProgress(com.fiap.report.domain.report.ReportStatus status) {
+        if (status == null) {
+            return 0;
+        }
+        switch (status) {
+            case RECEBIDO:
+                return 10;
+            case EM_PROCESSAMENTO:
+                return 50;
+            case ANALISADO:
+                return 100;
+            case ERRO:
+            default:
+                return 0;
+        }
+    }
+
+    private UUID convertToUUID(String uploadId) {
+        try {
+            return UUID.fromString(uploadId);
+        } catch (IllegalArgumentException e) {
+            return UUID.nameUUIDFromBytes(uploadId.getBytes());
+        }
     }
 
     // Endpoint para download do relatório (usado no botão de download)

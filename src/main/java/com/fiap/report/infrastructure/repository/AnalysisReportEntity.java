@@ -14,6 +14,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.JdbcTypeCode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -37,16 +39,19 @@ public class AnalysisReportEntity {
     private String userId;
 
     @Column(name = "components", columnDefinition = "jsonb")
-@Convert(converter = ComponentDataListConverter.class)
-private List<ComponentData> components;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Convert(converter = ComponentDataListConverter.class)
+    private List<ComponentData> components;
 
-@Column(name = "risks", columnDefinition = "jsonb")
-@Convert(converter = RiskDataListConverter.class)
-private List<RiskData> risks;
+    @Column(name = "risks", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Convert(converter = RiskDataListConverter.class)
+    private List<RiskData> risks;
 
-@Column(name = "recommendations", columnDefinition = "jsonb")
-@Convert(converter = RecommendationDataListConverter.class)
-private List<RecommendationData> recommendations;
+    @Column(name = "recommendations", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Convert(converter = RecommendationDataListConverter.class)
+    private List<RecommendationData> recommendations;
 
     @Column(name = "generated_at", nullable = false)
     private LocalDateTime generatedAt;
@@ -79,7 +84,7 @@ private List<RecommendationData> recommendations;
             generatedBy = "AI_SERVICE";
         }
         if (status == null) {
-            status = ReportStatus.GENERATED;
+            status = ReportStatus.RECEBIDO;
         }
     }
 

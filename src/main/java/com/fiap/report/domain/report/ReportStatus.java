@@ -1,10 +1,10 @@
 package com.fiap.report.domain.report;
 
 public enum ReportStatus {
-    GENERATED("Generated"),
-    PROCESSING("Processing"),
-    COMPLETED("Completed"),
-    ERROR("Error");
+    RECEBIDO("Recebido"),
+    EM_PROCESSAMENTO("Em processamento"),
+    ANALISADO("Analisado"),
+    ERRO("Erro");
 
     private final String displayName;
 

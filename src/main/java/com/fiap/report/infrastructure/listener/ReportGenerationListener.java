@@ -2,6 +2,7 @@ package com.fiap.report.infrastructure.listener;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fiap.report.gateway.StatusGateway;
+import com.fiap.report.infrastructure.mapper.AIAnalysisMapper;
 import com.fiap.report.usecase.CreateReportUseCase;
 import com.fiap.report.usecase.dto.AIAnalysisResult;
 import com.fiap.report.usecase.dto.ExtractedComponent;
@@ -27,6 +28,7 @@ public class ReportGenerationListener {
     private final CreateReportUseCase createReportUseCase;
     private final StatusGateway statusGateway;
     private final ObjectMapper objectMapper;
+    private final AIAnalysisMapper aiAnalysisMapper;
 
     @Value("${aws.sqs.report-generation-queue:report-generation-queue}")
     private String reportGenerationQueue;
@@ -64,26 +66,26 @@ public class ReportGenerationListener {
             // Converter para diagramId UUID
             UUID diagramId = convertToUUID(uploadId);
             
-            // 1. Atualizar status para PROCESSING
-            statusGateway.updateStatus(diagramId, "PROCESSING");
-            log.info("Status updated to PROCESSING for diagram: {}", diagramId);
+            // 1. Atualizar status para EM_PROCESSAMENTO
+            statusGateway.updateStatus(diagramId, "EM_PROCESSAMENTO");
+            log.info("Status updated to EM_PROCESSAMENTO for diagram: {}", diagramId);
             
             // Extrair componentes
             List<Map<String, Object>> componentsData = (List<Map<String, Object>>) analysis.get("components");
             List<ExtractedComponent> components = componentsData.stream()
-                    .map(this::mapToComponent)
+                    .map(aiAnalysisMapper::mapToComponent)
                     .toList();
             
             // Extrair riscos
             List<Map<String, Object>> risksData = (List<Map<String, Object>>) analysis.get("risks");
             List<IdentifiedRisk> risks = risksData.stream()
-                    .map(this::mapToRisk)
+                    .map(aiAnalysisMapper::mapToRisk)
                     .toList();
             
             // Extrair recomendações
             List<Map<String, Object>> recommendationsData = (List<Map<String, Object>>) analysis.get("recommendations");
             List<GeneratedRecommendation> recommendations = recommendationsData.stream()
-                    .map(this::mapToRecommendation)
+                    .map(aiAnalysisMapper::mapToRecommendation)
                     .toList();
             
             // Criar AIAnalysisResult
@@ -102,20 +104,20 @@ public class ReportGenerationListener {
             var report = createReportUseCase.execute(diagramId, aiResult);
             log.info("Report created successfully: {} for uploadId: {}", report.getId(), uploadId);
             
-            // 2. Atualizar status para COMPLETED
-            statusGateway.updateStatus(diagramId, "COMPLETED");
-            log.info("Status updated to COMPLETED for diagram: {}", diagramId);
+            // 2. Atualizar status para ANALISADO
+            statusGateway.updateStatus(diagramId, "ANALISADO");
+            log.info("Status updated to ANALISADO for diagram: {}", diagramId);
             
         } catch (Exception e) {
             log.error("Error processing report generation message from queue {}", reportGenerationQueue, e);
             
-            // 3. Em caso de erro, atualizar status para FAILED
+            // 3. Em caso de erro, atualizar status para ERRO
             try {
                 UUID diagramId = extractDiagramIdFromMessage(message);
-                statusGateway.updateStatus(diagramId, "FAILED");
-                log.info("Status updated to FAILED for diagram: {}", diagramId);
+                statusGateway.updateStatus(diagramId, "ERRO");
+                log.info("Status updated to ERRO for diagram: {}", diagramId);
             } catch (Exception statusError) {
-                log.error("Failed to update status to FAILED", statusError);
+                log.error("Failed to update status to ERRO", statusError);
             }
             
             throw new RuntimeException("Failed to process report generation", e);
@@ -140,53 +142,5 @@ public class ReportGenerationListener {
             // Se não for UUID, criar um consistente baseado na string
             return UUID.nameUUIDFromBytes(uploadId.getBytes());
         }
-    }
-    
-    @SuppressWarnings("unchecked")
-    private ExtractedComponent mapToComponent(Map<String, Object> componentData) {
-        Map<String, Object> properties = (Map<String, Object>) componentData.get("properties");
-        List<String> connections = (List<String>) componentData.get("connections");
-        
-        return ExtractedComponent.builder()
-                .id((String) componentData.get("id"))
-                .name((String) componentData.get("name"))
-                .type((String) componentData.get("type"))
-                .connections(connections)
-                .properties(properties)
-                .technology((String) componentData.get("technology"))
-                .description((String) componentData.get("description"))
-                .build();
-    }
-    
-    @SuppressWarnings("unchecked")
-    private IdentifiedRisk mapToRisk(Map<String, Object> riskData) {
-        List<String> mitigation = (List<String>) riskData.get("mitigation");
-        
-        return IdentifiedRisk.builder()
-                .id((String) riskData.get("id"))
-                .description((String) riskData.get("description"))
-                .level((String) riskData.get("level"))
-                .affectedComponent((String) riskData.get("affectedComponent"))
-                .category((String) riskData.get("category"))
-                .mitigation(mitigation)
-                .severityScore(((Number) riskData.getOrDefault("severityScore", 5)).intValue())
-                .impact((String) riskData.get("impact"))
-                .build();
-    }
-    
-    @SuppressWarnings("unchecked")
-    private GeneratedRecommendation mapToRecommendation(Map<String, Object> recommendationData) {
-        List<String> steps = (List<String>) recommendationData.get("steps");
-        
-        return GeneratedRecommendation.builder()
-                .id((String) recommendationData.get("id"))
-                .description((String) recommendationData.get("description"))
-                .targetComponent((String) recommendationData.get("targetComponent"))
-                .type((String) recommendationData.get("type"))
-                .priority((String) recommendationData.get("priority"))
-                .rationale((String) recommendationData.get("rationale"))
-                .effort((String) recommendationData.get("effort"))
-                .steps(steps)
-                .build();
     }
 }
