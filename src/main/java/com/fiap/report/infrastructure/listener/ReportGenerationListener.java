@@ -22,7 +22,6 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "aws.access.key")
 public class ReportGenerationListener {
 
     private final CreateReportUseCase createReportUseCase;
