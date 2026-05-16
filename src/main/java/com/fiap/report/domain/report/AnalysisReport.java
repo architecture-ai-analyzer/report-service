@@ -40,7 +40,7 @@ public class AnalysisReport {
                 .templateId(templateId)
                 .generatedAt(LocalDateTime.now())
                 .generatedBy("AI_SERVICE")
-                .status(ReportStatus.GENERATED)
+                .status(ReportStatus.RECEBIDO)
                 .build();
     }
 }

@@ -51,7 +51,7 @@ resource "kubernetes_deployment" "report_service_app" {
 
         container {
           name              = "report-service"
-          image             = "thiagotierre/report-service:latest"
+          image             = "thiagofrederico/report-service:latest"
           image_pull_policy = "Always"
           
 

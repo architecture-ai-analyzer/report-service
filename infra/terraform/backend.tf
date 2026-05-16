@@ -1,6 +1,7 @@
 terraform {
   backend "s3" {
-    bucket = "tf-state-challenge-bucket"
+    bucket = "report-service-bucket-ai-analyzer"
+    key    = "v1/report-service/dev/terraform.tfstate"
     region = "us-east-2"
   }
 }
