@@ -38,7 +38,7 @@ public class AnalysisReport {
                 .userId(userId)
                 .generatedAt(LocalDateTime.now())
                 .generatedBy("AI_SERVICE")
-                .status(ReportStatus.GENERATED)
+                .status(ReportStatus.RECEBIDO)
                 .build();
     }
 }

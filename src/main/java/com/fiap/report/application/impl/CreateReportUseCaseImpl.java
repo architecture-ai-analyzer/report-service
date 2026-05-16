@@ -59,7 +59,7 @@ public class CreateReportUseCaseImpl implements CreateReportUseCase {
                     .aiModelVersion(aiResult.getModelVersion())
                     .confidenceScore(aiResult.getConfidenceScore())
                     .processingTimeMs(aiResult.getProcessingTimeMs())
-                    .status(ReportStatus.COMPLETED)
+                    .status(ReportStatus.ANALISADO)
                     .build();
 
             return repository.save(report);

@@ -1,10 +1,10 @@
-FROM openjdk:21-jre-slim
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
 COPY target/report-service-*.jar app.jar
 
-EXPOSE 8083
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \

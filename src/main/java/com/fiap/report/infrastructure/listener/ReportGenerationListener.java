@@ -1,33 +1,146 @@
 package com.fiap.report.infrastructure.listener;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fiap.report.usecase.CreateReportUseCase;
 import com.fiap.report.gateway.StatusGateway;
-import com.fiap.report.domain.report.AnalysisReport;
+import com.fiap.report.infrastructure.mapper.AIAnalysisMapper;
+import com.fiap.report.usecase.CreateReportUseCase;
+import com.fiap.report.usecase.dto.AIAnalysisResult;
+import com.fiap.report.usecase.dto.ExtractedComponent;
+import com.fiap.report.usecase.dto.IdentifiedRisk;
+import com.fiap.report.usecase.dto.GeneratedRecommendation;
+import io.awspring.cloud.sqs.annotation.SqsListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "aws.access.key")
 public class ReportGenerationListener {
 
     private final CreateReportUseCase createReportUseCase;
     private final StatusGateway statusGateway;
     private final ObjectMapper objectMapper;
+    private final AIAnalysisMapper aiAnalysisMapper;
 
-    // Método para processamento manual (sem SQS por enquanto)
+    @Value("${aws.sqs.report-generation-queue:report-generation-queue}")
+    private String reportGenerationQueue;
+
+    /**
+     * Processa mensagem da fila SQS com resultado da análise da IA
+     * Formato esperado:
+     * {
+     *   "uploadId": "arch-analysis-2024-03-30-001",
+     *   "analysis": {
+     *     "components": [...],
+     *     "risks": [...],
+     *     "recommendations": [...]
+     *   },
+     *   "metadata": {
+     *     "modelVersion": "gpt-4-vision-preview",
+     *     "confidenceScore": 0.89,
+     *     "processingTimeMs": 3200,
+     *     "userId": "user-123"
+     *   }
+     * }
+     */
+    @SqsListener("${aws.sqs.report-generation-queue:report-generation-queue}")
     public void handleReportGeneration(String message) {
-        log.info("Received report generation message: {}", message);
+        log.info("Received report generation message from queue {}: {}", reportGenerationQueue, message);
 
         try {
-            // TODO: Implementar processamento quando necessário
-            log.info("Processing report generation (mock implementation)");
+            // Parse da mensagem da IA
+            Map<String, Object> messageData = objectMapper.readValue(message, Map.class);
+            
+            String uploadId = (String) messageData.get("uploadId");
+            Map<String, Object> analysis = (Map<String, Object>) messageData.get("analysis");
+            Map<String, Object> metadata = (Map<String, Object>) messageData.get("metadata");
+            
+            // Converter para diagramId UUID
+            UUID diagramId = convertToUUID(uploadId);
+            
+            // 1. Atualizar status para EM_PROCESSAMENTO
+            statusGateway.updateStatus(diagramId, "EM_PROCESSAMENTO");
+            log.info("Status updated to EM_PROCESSAMENTO for diagram: {}", diagramId);
+            
+            // Extrair componentes
+            List<Map<String, Object>> componentsData = (List<Map<String, Object>>) analysis.get("components");
+            List<ExtractedComponent> components = componentsData.stream()
+                    .map(aiAnalysisMapper::mapToComponent)
+                    .toList();
+            
+            // Extrair riscos
+            List<Map<String, Object>> risksData = (List<Map<String, Object>>) analysis.get("risks");
+            List<IdentifiedRisk> risks = risksData.stream()
+                    .map(aiAnalysisMapper::mapToRisk)
+                    .toList();
+            
+            // Extrair recomendações
+            List<Map<String, Object>> recommendationsData = (List<Map<String, Object>>) analysis.get("recommendations");
+            List<GeneratedRecommendation> recommendations = recommendationsData.stream()
+                    .map(aiAnalysisMapper::mapToRecommendation)
+                    .toList();
+            
+            // Criar AIAnalysisResult
+            AIAnalysisResult aiResult = AIAnalysisResult.builder()
+                    .diagramId(diagramId)
+                    .userId((String) metadata.getOrDefault("userId", "system"))
+                    .extractedComponents(components)
+                    .identifiedRisks(risks)
+                    .generatedRecommendations(recommendations)
+                    .modelVersion((String) metadata.getOrDefault("modelVersion", "unknown"))
+                    .confidenceScore(((Number) metadata.getOrDefault("confidenceScore", 0.0)).doubleValue())
+                    .processingTimeMs(((Number) metadata.getOrDefault("processingTimeMs", 0)).longValue())
+                    .build();
+            
+            // Criar relatório
+            var report = createReportUseCase.execute(diagramId, aiResult);
+            log.info("Report created successfully: {} for uploadId: {}", report.getId(), uploadId);
+            
+            // 2. Atualizar status para ANALISADO
+            statusGateway.updateStatus(diagramId, "ANALISADO");
+            log.info("Status updated to ANALISADO for diagram: {}", diagramId);
             
         } catch (Exception e) {
-            log.error("Error processing report generation message", e);
+            log.error("Error processing report generation message from queue {}", reportGenerationQueue, e);
+            
+            // 3. Em caso de erro, atualizar status para ERRO
+            try {
+                UUID diagramId = extractDiagramIdFromMessage(message);
+                statusGateway.updateStatus(diagramId, "ERRO");
+                log.info("Status updated to ERRO for diagram: {}", diagramId);
+            } catch (Exception statusError) {
+                log.error("Failed to update status to ERRO", statusError);
+            }
+            
             throw new RuntimeException("Failed to process report generation", e);
+        }
+    }
+    
+    private UUID extractDiagramIdFromMessage(String message) {
+        try {
+            Map<String, Object> messageData = objectMapper.readValue(message, Map.class);
+            String uploadId = (String) messageData.get("uploadId");
+            return convertToUUID(uploadId);
+        } catch (Exception e) {
+            log.error("Failed to extract diagramId from message: {}", message, e);
+            return UUID.randomUUID(); // Fallback
+        }
+    }
+    
+    private UUID convertToUUID(String uploadId) {
+        try {
+            return UUID.fromString(uploadId);
+        } catch (IllegalArgumentException e) {
+            // Se não for UUID, criar um consistente baseado na string
+            return UUID.nameUUIDFromBytes(uploadId.getBytes());
         }
     }
 }
