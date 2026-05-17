@@ -1,6 +1,6 @@
 resource "kubernetes_service_account" "report_service" {
   metadata {
-    name      = "report-service"
+    name      = var.app_name
     namespace = kubernetes_namespace.report_service.metadata[0].name
   }
 

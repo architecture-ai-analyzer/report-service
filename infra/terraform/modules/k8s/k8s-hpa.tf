@@ -1,9 +1,9 @@
 resource "kubernetes_horizontal_pod_autoscaler" "report_service" {
   metadata {
-    name      = "report-service-hpa"
+    name      = "${var.app_name}-hpa"
     namespace = kubernetes_namespace.report_service.metadata[0].name
     labels = {
-      app = "report-service"
+      app = var.app_name
     }
   }
 
@@ -17,7 +17,6 @@ resource "kubernetes_horizontal_pod_autoscaler" "report_service" {
       name        = kubernetes_deployment.report_service.metadata[0].name
     }
 
-    # CPU-based scaling (70% target utilization)
     target_cpu_utilization_percentage = 70
   }
 

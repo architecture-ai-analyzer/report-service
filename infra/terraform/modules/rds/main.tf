@@ -39,10 +39,10 @@ resource "aws_db_instance" "main" {
   engine_version = var.engine_version
   instance_class = var.instance_class
 
-  allocated_storage     = var.allocated_storage
-  storage_type          = "gp2"
-  publicly_accessible   = false
-  db_subnet_group_name  = aws_db_subnet_group.main.name
+  allocated_storage      = var.allocated_storage
+  storage_type           = "gp2"
+  publicly_accessible    = false
+  db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds.id]
 
   db_name  = var.database_name

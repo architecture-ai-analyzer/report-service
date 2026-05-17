@@ -4,15 +4,13 @@ resource "kubernetes_deployment" "report_service" {
     kubernetes_service_account.report_service,
     kubernetes_config_map.report_service,
     kubernetes_secret.report_service,
-    module.rds
-    # data.aws_s3_bucket.main
   ]
 
   metadata {
-    name      = "report-service"
+    name      = var.app_name
     namespace = kubernetes_namespace.report_service.metadata[0].name
     labels = {
-      app     = "report-service"
+      app     = var.app_name
       version = "v1"
     }
   }
@@ -24,14 +22,14 @@ resource "kubernetes_deployment" "report_service" {
 
     selector {
       match_labels = {
-        app = "report-service"
+        app = var.app_name
       }
     }
 
     template {
       metadata {
         labels = {
-          app     = "report-service"
+          app     = var.app_name
           version = "v1"
         }
 
@@ -45,7 +43,7 @@ resource "kubernetes_deployment" "report_service" {
         service_account_name = kubernetes_service_account.report_service.metadata[0].name
 
         container {
-          name              = "report-service"
+          name              = var.app_name
           image             = var.container_image
           image_pull_policy = "Always"
 
@@ -55,21 +53,18 @@ resource "kubernetes_deployment" "report_service" {
             protocol       = "TCP"
           }
 
-          # Loading variables from ConfigMap
           env_from {
             config_map_ref {
               name = kubernetes_config_map.report_service.metadata[0].name
             }
           }
 
-          # Loading secrets
           env_from {
             secret_ref {
               name = kubernetes_secret.report_service.metadata[0].name
             }
           }
 
-          # Health checks
           liveness_probe {
             http_get {
               path   = "/actuator/health"
@@ -96,7 +91,6 @@ resource "kubernetes_deployment" "report_service" {
             failure_threshold     = 3
           }
 
-          # Resource requests and limits
           resources {
             requests = {
               cpu    = "250m"
@@ -109,20 +103,17 @@ resource "kubernetes_deployment" "report_service" {
             }
           }
 
-          # Volume mounts
           volume_mount {
             name       = "tmp"
             mount_path = "/tmp"
           }
         }
 
-        # Volumes
         volume {
           name = "tmp"
           empty_dir {}
         }
 
-        # Security context
         security_context {
           run_as_non_root = true
           run_as_user     = 1000
