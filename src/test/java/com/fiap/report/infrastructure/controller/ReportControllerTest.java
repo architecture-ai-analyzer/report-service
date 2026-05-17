@@ -13,7 +13,9 @@ import com.fiap.report.domain.report.AnalysisReport;
 import com.fiap.report.domain.report.ReportStatus;
 import com.fiap.report.gateway.StatusGateway;
 import com.fiap.report.infrastructure.mapper.AIAnalysisMapper;
+import com.fiap.report.infrastructure.dto.ProcessingStatusResponse;
 import com.fiap.report.infrastructure.dto.ReportResponse;
+import com.fiap.report.infrastructure.dto.ReportSummaryResponse;
 import com.fiap.report.usecase.CreateReportUseCase;
 import com.fiap.report.usecase.FindReportByDiagramIdUseCase;
 import com.fiap.report.usecase.GetReportUseCase;
@@ -39,6 +41,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -197,5 +200,290 @@ class ReportControllerTest {
         assertThat(response.getBody().getDetectedComponents()).hasSize(1);
         assertThat(response.getBody().getSecurityAnalysis()).isNotNull();
         assertThat(response.getBody().getRecommendations()).hasSize(1);
+    }
+
+    @Test
+    void generateReport_existingReport_returnsExistingReport() {
+        String uploadId = "upload-123";
+        UUID diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
+
+        Map<String, Object> requestBody = Map.of(
+                "analysis", Map.of("components", List.of(), "risks", List.of(), "recommendations", List.of()),
+                "metadata", Map.of("userId", "user-123")
+        );
+
+        AnalysisReport existingReport = AnalysisReport.builder()
+                .id(UUID.randomUUID())
+                .diagramId(diagramId)
+                .userId("user-123")
+                .status(ReportStatus.ANALISADO)
+                .build();
+
+        when(findReportByDiagramIdUseCase.execute(diagramId)).thenReturn(Optional.of(existingReport));
+
+        ResponseEntity<ReportResponse> response = controller.generateReport(uploadId, requestBody);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).isNotNull();
+    }
+
+    @Test
+    void generateReport_invalidPayload_returnsBadRequest() {
+        String uploadId = "upload-123";
+        Map<String, Object> requestBody = Map.of("invalid", "payload");
+
+        ResponseEntity<ReportResponse> response = controller.generateReport(uploadId, requestBody);
+
+        assertThat(response.getStatusCode().is4xxClientError());
+    }
+
+    @Test
+    void listReports_returnsReports() {
+        AnalysisReport report = AnalysisReport.builder()
+                .id(UUID.randomUUID())
+                .diagramId(UUID.randomUUID())
+                .userId("user-123")
+                .status(ReportStatus.ANALISADO)
+                .build();
+
+        when(listReportsUseCase.execute(any(), any())).thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(report)));
+
+        ResponseEntity<List<ReportSummaryResponse>> response = controller.listReports(0, 10);
+
+        assertThat(response.getStatusCode().is2xxSuccessful());
+        assertThat(response.getBody()).hasSize(1);
+    }
+
+    @Test
+    void getReport_existingReport_returnsReport() {
+        String uploadId = UUID.randomUUID().toString();
+        UUID diagramId = UUID.fromString(uploadId);
+
+        AnalysisReport report = AnalysisReport.builder()
+                .id(UUID.randomUUID())
+                .diagramId(diagramId)
+                .userId("user-123")
+                .status(ReportStatus.ANALISADO)
+                .build();
+
+        when(getReportUseCase.execute(diagramId)).thenReturn(report);
+
+        ResponseEntity<ReportResponse> response = controller.getReport(uploadId);
+
+        assertThat(response.getStatusCode().is2xxSuccessful());
+        assertThat(response.getBody()).isNotNull();
+    }
+
+    @Test
+    void getReport_nonExistingReport_returnsNotFound() {
+        String uploadId = UUID.randomUUID().toString();
+        UUID diagramId = UUID.fromString(uploadId);
+
+        when(getReportUseCase.execute(diagramId)).thenThrow(new RuntimeException("Not found"));
+
+        ResponseEntity<ReportResponse> response = controller.getReport(uploadId);
+
+        assertThat(response.getStatusCode().is4xxClientError());
+    }
+
+    @Test
+    void getProcessingStatus_existingReport_returnsStatus() {
+        String uploadId = "upload-123";
+        UUID diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
+
+        AnalysisReport report = AnalysisReport.builder()
+                .id(UUID.randomUUID())
+                .diagramId(diagramId)
+                .userId("user-123")
+                .status(ReportStatus.ANALISADO)
+                .build();
+
+        when(findReportByDiagramIdUseCase.execute(diagramId)).thenReturn(Optional.of(report));
+
+        ResponseEntity<ProcessingStatusResponse> response = controller.getProcessingStatus(uploadId);
+
+        assertThat(response.getStatusCode().is2xxSuccessful());
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getStatus()).isEqualTo("ANALISADO");
+    }
+
+    @Test
+    void getProcessingStatus_nonExistingReport_returnsNotFound() {
+        String uploadId = "upload-123";
+        UUID diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
+
+        when(findReportByDiagramIdUseCase.execute(diagramId)).thenReturn(Optional.empty());
+
+        ResponseEntity<ProcessingStatusResponse> response = controller.getProcessingStatus(uploadId);
+
+        assertThat(response.getStatusCode().is4xxClientError());
+    }
+
+    @Test
+    void downloadReport_returnsPdf() {
+        String uploadId = "upload-123";
+
+        ResponseEntity<byte[]> response = controller.downloadReport(uploadId);
+
+        assertThat(response.getStatusCode().is2xxSuccessful());
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().length).isGreaterThan(0);
+    }
+
+    @Test
+    void generateReport_withError_updatesStatusToError() {
+        String uploadId = "upload-123";
+        UUID diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
+
+        Map<String, Object> requestBody = Map.of(
+                "analysis", Map.of("components", List.of(), "risks", List.of(), "recommendations", List.of()),
+                "metadata", Map.of("userId", "user-123")
+        );
+
+        when(findReportByDiagramIdUseCase.execute(diagramId)).thenReturn(Optional.empty());
+        when(createReportUseCase.execute(eq(diagramId), any(AIAnalysisResult.class))).thenThrow(new RuntimeException("Test error"));
+
+        ResponseEntity<ReportResponse> response = controller.generateReport(uploadId, requestBody);
+
+        assertThat(response.getStatusCode().is4xxClientError());
+    }
+
+    @Test
+    void getReport_withNonUUIDString_convertsToUUID() {
+        String uploadId = "non-uuid-string";
+
+        AnalysisReport report = AnalysisReport.builder()
+                .id(UUID.randomUUID())
+                .diagramId(UUID.nameUUIDFromBytes(uploadId.getBytes()))
+                .userId("user-123")
+                .status(ReportStatus.ANALISADO)
+                .build();
+
+        when(getReportUseCase.execute(any())).thenReturn(report);
+
+        ResponseEntity<ReportResponse> response = controller.getReport(uploadId);
+
+        assertThat(response.getStatusCode().is2xxSuccessful());
+        assertThat(response.getBody()).isNotNull();
+    }
+
+    @Test
+    void getProcessingStatus_withDifferentStatuses_returnsCorrectProgress() {
+        String uploadId = "upload-123";
+        UUID diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
+
+        // Test RECEBIDO status
+        AnalysisReport reportRecebido = AnalysisReport.builder()
+                .id(UUID.randomUUID())
+                .diagramId(diagramId)
+                .userId("user-123")
+                .status(ReportStatus.RECEBIDO)
+                .build();
+
+        when(findReportByDiagramIdUseCase.execute(diagramId)).thenReturn(Optional.of(reportRecebido));
+
+        ResponseEntity<ProcessingStatusResponse> responseRecebido = controller.getProcessingStatus(uploadId);
+        assertThat(responseRecebido.getBody().getProgress()).isEqualTo(10);
+
+        // Test EM_PROCESSAMENTO status
+        AnalysisReport reportProcessando = AnalysisReport.builder()
+                .id(UUID.randomUUID())
+                .diagramId(diagramId)
+                .userId("user-123")
+                .status(ReportStatus.EM_PROCESSAMENTO)
+                .build();
+
+        when(findReportByDiagramIdUseCase.execute(diagramId)).thenReturn(Optional.of(reportProcessando));
+
+        ResponseEntity<ProcessingStatusResponse> responseProcessando = controller.getProcessingStatus(uploadId);
+        assertThat(responseProcessando.getBody().getProgress()).isEqualTo(50);
+
+        // Test ANALISADO status
+        AnalysisReport reportAnalisado = AnalysisReport.builder()
+                .id(UUID.randomUUID())
+                .diagramId(diagramId)
+                .userId("user-123")
+                .status(ReportStatus.ANALISADO)
+                .build();
+
+        when(findReportByDiagramIdUseCase.execute(diagramId)).thenReturn(Optional.of(reportAnalisado));
+
+        ResponseEntity<ProcessingStatusResponse> responseAnalisado = controller.getProcessingStatus(uploadId);
+        assertThat(responseAnalisado.getBody().getProgress()).isEqualTo(100);
+
+        // Test ERRO status
+        AnalysisReport reportErro = AnalysisReport.builder()
+                .id(UUID.randomUUID())
+                .diagramId(diagramId)
+                .userId("user-123")
+                .status(ReportStatus.ERRO)
+                .build();
+
+        when(findReportByDiagramIdUseCase.execute(diagramId)).thenReturn(Optional.of(reportErro));
+
+        ResponseEntity<ProcessingStatusResponse> responseErro = controller.getProcessingStatus(uploadId);
+        assertThat(responseErro.getBody().getProgress()).isEqualTo(0);
+    }
+
+    @Test
+    void getProcessingStatus_withNullStatus_returnsZeroProgress() {
+        String uploadId = "upload-123";
+        UUID diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
+
+        AnalysisReport reportNullStatus = AnalysisReport.builder()
+                .id(UUID.randomUUID())
+                .diagramId(diagramId)
+                .userId("user-123")
+                .status(null)
+                .build();
+
+        when(findReportByDiagramIdUseCase.execute(diagramId)).thenReturn(Optional.of(reportNullStatus));
+
+        ResponseEntity<ProcessingStatusResponse> response = controller.getProcessingStatus(uploadId);
+        assertThat(response.getBody().getProgress()).isEqualTo(0);
+    }
+
+    @Test
+    void generateReport_withEmptyMetadata_usesDefaultValues() {
+        String uploadId = "upload-123";
+        UUID diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
+
+        Map<String, Object> requestBody = Map.of(
+                "analysis", Map.of("components", List.of(), "risks", List.of(), "recommendations", List.of()),
+                "metadata", Map.of()
+        );
+
+        when(findReportByDiagramIdUseCase.execute(diagramId)).thenReturn(Optional.empty());
+
+        AnalysisReport report = AnalysisReport.builder()
+                .id(UUID.randomUUID())
+                .diagramId(diagramId)
+                .userId("default-user")
+                .status(ReportStatus.ANALISADO)
+                .build();
+
+        when(createReportUseCase.execute(eq(diagramId), any(AIAnalysisResult.class))).thenReturn(report);
+
+        ResponseEntity<ReportResponse> response = controller.generateReport(uploadId, requestBody);
+
+        assertThat(response.getStatusCode().is2xxSuccessful());
+    }
+
+    @Test
+    void generateReport_withErrorInStatusUpdate_updatesStatusToError() {
+        String uploadId = "upload-123";
+        UUID diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
+
+        Map<String, Object> requestBody = Map.of(
+                "analysis", Map.of("components", List.of(), "risks", List.of(), "recommendations", List.of()),
+                "metadata", Map.of("userId", "user-123")
+        );
+
+        when(findReportByDiagramIdUseCase.execute(diagramId)).thenReturn(Optional.empty());
+        doThrow(new RuntimeException("Status update error")).when(statusGateway).updateStatus(any(), any());
+
+        ResponseEntity<ReportResponse> response = controller.generateReport(uploadId, requestBody);
+
+        assertThat(response.getStatusCode().is4xxClientError());
     }
 }
