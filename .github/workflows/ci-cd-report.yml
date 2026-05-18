@@ -11,7 +11,8 @@ on:
 env:
   AWS_REGION: us-east-2
   ENVIRONMENT: ${{ github.ref_name == 'main' && 'production' || (github.ref_name == 'homologation' && 'homologation' || 'dev') }}
-  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/stock-service
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/report-service
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
@@ -100,7 +101,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           mvn -B clean verify
-          mvn -B jacoco:report -pl core,usecase,application,infrastructure
+          mvn -B jacoco:report
           mvn -B sonar:sonar -Dsonar.projectKey=challenger-pos_stock-service -Dsonar.automatic.analysis.disabled=true
         continue-on-error: true
 
