@@ -5,12 +5,14 @@ on:
     branches:
       - main
       - homologation
+      - develop
   workflow_dispatch:
 
 env:
   AWS_REGION: us-east-2
-  ENVIRONMENT: ${{ github.ref_name == 'main' && 'production' || (github.ref_name == 'homologation' && 'homologation' || 'dev') }}
-  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/stock-service
+  ENVIRONMENT: ${{ github.ref_name == 'main' && 'production' || (github.ref_name == 'homologation' && 'homologation' || 'develop') }}
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/report-service
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
@@ -69,6 +71,7 @@ jobs:
     name: SonarCloud Quality Gate
     runs-on: ubuntu-latest
     needs: test
+    environment: ${{ github.ref_name == 'main' && 'production' || (github.ref_name == 'homologation' && 'homologation' || 'develop') }}
 
     steps:
       - name: Checkout code
@@ -99,8 +102,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           mvn -B clean verify
-          mvn -B jacoco:report -pl core,usecase,application,infrastructure
-          mvn -B sonar:sonar -Dsonar.projectKey=challenger-pos_stock-service -Dsonar.automatic.analysis.disabled=true
+          mvn -B jacoco:report
+          mvn -B sonar:sonar -Dsonar.automatic.analysis.disabled=true
         continue-on-error: true
 
       
@@ -108,10 +111,10 @@ jobs:
     name: Push Image & Deploy Infra
     runs-on: ubuntu-latest
     needs: quality-check
-    environment: ${{ github.ref_name == 'main' && 'production' || (github.ref_name == 'homologation' && 'homologation' || 'dev') }}
+    environment: ${{ github.ref_name == 'main' && 'production' || (github.ref_name == 'homologation' && 'homologation' || 'develop') }}
 
     env:
-      TERRAFORM_DIR: infra/terraform/
+      TERRAFORM_DIR: infra/terraform/envs/${{ github.ref_name == 'main' && 'production' || (github.ref_name == 'homologation' && 'homologation' || 'develop') }}
 
     steps:
       - name: Checkout code
@@ -145,6 +148,15 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Build JAR for Docker
+        run: mvn -B -DskipTests package
+
       - name: Build and Push Docker Image
         run: |
           docker build -t $IMAGE_NAME:${{ env.TAG }} .
@@ -154,14 +166,14 @@ jobs:
 
       - name: Terraform Init
         working-directory: ${{ env.TERRAFORM_DIR }}
-        run: terraform init -backend-config="key=v4/service-stock/${{ env.ENVIRONMENT }}/terraform.tfstate"
+        run: terraform init
 
       - name: Terraform Apply
         working-directory: ${{ env.TERRAFORM_DIR }}
         run: terraform apply -auto-approve
         env:
           TF_VAR_environment: ${{ env.ENVIRONMENT }}
-          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_rds_password: ${{ secrets.DB_PASSWORD }}
           TF_VAR_image_tag: ${{ env.TAG }}
           TF_VAR_aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           TF_VAR_aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
