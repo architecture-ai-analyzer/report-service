@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - homologation
-      - feature/changePipe
+      - develop
   workflow_dispatch:
 
 env:
