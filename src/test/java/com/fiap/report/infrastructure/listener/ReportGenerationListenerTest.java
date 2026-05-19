@@ -202,7 +202,7 @@ class ReportGenerationListenerTest {
         when(createReportUseCase.execute(eq(diagramId), any(AIAnalysisResult.class)))
                 .thenThrow(new RuntimeException("database error"));
 
-        assertThrows(RuntimeException.class, () -> listener.handleReportGeneration(message));
+        listener.handleReportGeneration(message);
 
         InOrder inOrder = inOrder(statusGateway);
         inOrder.verify(statusGateway).updateStatus(diagramId, "EM_PROCESSAMENTO");

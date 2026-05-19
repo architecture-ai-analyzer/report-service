@@ -108,7 +108,7 @@ public class ReportGenerationListener {
             
         } catch (Exception e) {
             log.error("Error processing report generation message from queue {}", reportGenerationQueue, e);
-            
+
             // 3. Em caso de erro, atualizar status para ERRO
             try {
                 UUID diagramId = extractDiagramIdFromMessage(message);
@@ -117,8 +117,9 @@ public class ReportGenerationListener {
             } catch (Exception statusError) {
                 log.error("Failed to update status to ERRO", statusError);
             }
-            
-            throw new RuntimeException("Failed to process report generation", e);
+
+            // Não lança exceção para evitar que o SQS retente a mensagem indefinidamente
+            log.warn("Message processing failed, but will not be retried to prevent infinite loop");
         }
     }
     
