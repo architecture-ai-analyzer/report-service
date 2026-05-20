@@ -122,7 +122,6 @@ public class ReportController {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private AIAnalysisResult buildAIAnalysisResult(UUID diagramId, Map<String, Object> requestData) {
         Map<String, Object> analysis = (Map<String, Object>) requestData.get("analysis");
         Map<String, Object> metadata = (Map<String, Object>) requestData.get("metadata");
@@ -150,7 +149,6 @@ public class ReportController {
         return AIAnalysisResult.builder()
                 .diagramId(diagramId)
                 .userId((String) metadata.getOrDefault("userId", "default-user"))
-                .templateId((String) metadata.getOrDefault("templateId", "template-tecnico")) // Incluído o templateId aqui!
                 .extractedComponents(components)
                 .identifiedRisks(risks)
                 .generatedRecommendations(recommendations)
@@ -364,87 +362,5 @@ public class ReportController {
                 "endstream endobj\n" +
                 "xref\n0 6\n0000000000 65535 f \n0000000010 00000 n \n0000000079 00000 n \n0000000173 00000 n \n0000000301 00000 n \n0000000380 00000 n \n" +
                 "trailer<< /Size 6 /Root 1 0 R >>\nstartxref\n650\n%%EOF";
-    }
-
-    private List<ExtractedComponent> generateMockComponents() {
-        return List.of(
-                ExtractedComponent.builder()
-                        .id("comp-api-gateway")
-                        .name("API Gateway")
-                        .type("API")
-                        .connections(List.of("user-service", "order-service"))
-                        .properties(Map.of("protocol", "REST", "rateLimit", "1000 req/s"))
-                        .technology("Spring Cloud Gateway")
-                        .description("Gateway para roteamento de requisições")
-                        .build(),
-                ExtractedComponent.builder()
-                        .id("comp-user-service")
-                        .name("User Service")
-                        .type("MICROSERVICE")
-                        .connections(List.of("database"))
-                        .properties(Map.of("port", "8081", "framework", "Spring Boot"))
-                        .technology("Java Spring Boot")
-                        .description("Serviço de gerenciamento de usuários")
-                        .build(),
-                ExtractedComponent.builder()
-                        .id("comp-database")
-                        .name("PostgreSQL Database")
-                        .type("DATABASE")
-                        .connections(List.of("user-service", "order-service"))
-                        .properties(Map.of("version", "14", "maxConnections", "100"))
-                        .technology("PostgreSQL")
-                        .description("Banco de dados principal da aplicação")
-                        .build()
-        );
-    }
-
-    private List<IdentifiedRisk> generateMockRisks() {
-        return List.of(
-                IdentifiedRisk.builder()
-                        .id("risk-1")
-                        .description("Ponto único de falha no banco de dados")
-                        .level("HIGH")
-                        .affectedComponent("database")
-                        .category("RELIABILITY")
-                        .mitigation(List.of("Implementar clustering no banco de dados", "Adicionar réplicas de leitura", "Configurar failover automático"))
-                        .severityScore(8)
-                        .impact("Indisponibilidade do serviço se o banco falhar")
-                        .build(),
-                IdentifiedRisk.builder()
-                        .id("risk-2")
-                        .description("Sem autenticação no API Gateway")
-                        .level("CRITICAL")
-                        .affectedComponent("API Gateway")
-                        .category("SECURITY")
-                        .mitigation(List.of("Implementar OAuth 2.0", "Adicionar validação JWT", "Configurar rate limiting"))
-                        .severityScore(9)
-                        .impact("Acesso não autorizado aos serviços")
-                        .build()
-        );
-    }
-
-    private List<GeneratedRecommendation> generateMockRecommendations() {
-        return List.of(
-                GeneratedRecommendation.builder()
-                        .id("rec-1")
-                        .description("Implementar padrão circuit breaker")
-                        .targetComponent("API Gateway")
-                        .type("RELIABILITY")
-                        .priority("HIGH")
-                        .rationale("Previne falhas em cascata entre serviços")
-                        .effort("MEDIUM")
-                        .steps(List.of("Adicionar Hystrix ou Resilience4j", "Configurar métodos de fallback", "Configurar monitoramento e alertas"))
-                        .build(),
-                GeneratedRecommendation.builder()
-                        .id("rec-2")
-                        .description("Adicionar tracing distribuído")
-                        .targetComponent("All Services")
-                        .type("MONITORING")
-                        .priority("MEDIUM")
-                        .rationale("Melhora observabilidade e debugging")
-                        .effort("LOW")
-                        .steps(List.of("Integrar Zipkin ou Jaeger", "Adicionar IDs de tracing nas requisições", "Configurar logging centralizado"))
-                        .build()
-        );
     }
 }
