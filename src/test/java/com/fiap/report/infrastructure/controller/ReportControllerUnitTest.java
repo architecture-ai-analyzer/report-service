@@ -6,6 +6,7 @@ import com.fiap.report.infrastructure.mapper.AIAnalysisMapper;
 import com.fiap.report.infrastructure.dto.ReportResponse;
 import com.fiap.report.usecase.CreateReportUseCase;
 import com.fiap.report.usecase.FindReportByDiagramIdUseCase;
+import com.fiap.report.usecase.GenerateReportPdfUseCase;
 import com.fiap.report.usecase.GetReportUseCase;
 import com.fiap.report.usecase.ListReportsUseCase;
 import com.fiap.report.gateway.StatusGateway;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,6 +28,7 @@ class ReportControllerUnitTest {
     private CreateReportUseCase createReportUseCase;
     private FindReportByDiagramIdUseCase findReportByDiagramIdUseCase;
     private GetReportUseCase getReportUseCase;
+    private GenerateReportPdfUseCase generateReportPdfUseCase;
     private ListReportsUseCase listReportsUseCase;
     private StatusGateway statusGateway;
     private AIAnalysisMapper aiAnalysisMapper;
@@ -37,12 +40,13 @@ class ReportControllerUnitTest {
         createReportUseCase = mock(CreateReportUseCase.class);
         findReportByDiagramIdUseCase = mock(FindReportByDiagramIdUseCase.class);
         getReportUseCase = mock(GetReportUseCase.class);
+        generateReportPdfUseCase = mock(GenerateReportPdfUseCase.class);
         listReportsUseCase = mock(ListReportsUseCase.class);
         statusGateway = mock(StatusGateway.class);
         aiAnalysisMapper = mock(AIAnalysisMapper.class);
 
         controller = new ReportController(createReportUseCase, findReportByDiagramIdUseCase,
-                getReportUseCase, listReportsUseCase, statusGateway, aiAnalysisMapper);
+                getReportUseCase, generateReportPdfUseCase, listReportsUseCase, statusGateway, aiAnalysisMapper);
     }
 
     @Test
@@ -122,6 +126,10 @@ class ReportControllerUnitTest {
     @Test
     void downloadReport_returnsPdfBytes() {
         String uploadId = "download-me";
+        UUID diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
+        byte[] pdfBytes = "%PDF-1.4".getBytes(StandardCharsets.UTF_8);
+
+        when(generateReportPdfUseCase.execute(diagramId)).thenReturn(pdfBytes);
 
         var resp = controller.downloadReport(uploadId);
 
@@ -129,7 +137,6 @@ class ReportControllerUnitTest {
         assertThat(resp.getHeaders().getFirst("Content-Type")).isEqualTo("application/pdf");
         var body = resp.getBody();
         assertThat(body).isNotNull();
-        String asString = new String(body);
-        assertThat(asString).startsWith("%PDF-1.1");
+        assertThat(body).containsExactly(pdfBytes);
     }
 }
