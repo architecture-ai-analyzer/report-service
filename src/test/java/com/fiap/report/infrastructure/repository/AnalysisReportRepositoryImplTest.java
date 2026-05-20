@@ -50,7 +50,6 @@ class AnalysisReportRepositoryImplTest {
         AnalysisReportEntity entity = AnalysisReportEntity.builder()
                 .id(id)
                 .diagramId(UUID.randomUUID())
-                .userId("user-123")
                 .status(ReportStatus.ANALISADO)
                 .build();
         
@@ -78,7 +77,6 @@ class AnalysisReportRepositoryImplTest {
         AnalysisReportEntity entity = AnalysisReportEntity.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
-                .userId("user-123")
                 .status(ReportStatus.ANALISADO)
                 .build();
         
@@ -96,13 +94,11 @@ class AnalysisReportRepositoryImplTest {
                 AnalysisReportEntity.builder()
                         .id(UUID.randomUUID())
                         .diagramId(UUID.randomUUID())
-                        .userId("user-1")
                         .status(ReportStatus.ANALISADO)
                         .build(),
                 AnalysisReportEntity.builder()
                         .id(UUID.randomUUID())
                         .diagramId(UUID.randomUUID())
-                        .userId("user-2")
                         .status(ReportStatus.ANALISADO)
                         .build()
         );

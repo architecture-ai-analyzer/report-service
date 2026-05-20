@@ -18,7 +18,6 @@ class ReportSummaryResponseTest {
         ReportSummaryResponse response = ReportSummaryResponse.builder()
                 .id(id)
                 .diagramId(diagramId)
-                .userId("user-123")
                 .status("ANALISADO")
                 .createdAt(createdAt)
                 .updatedAt(createdAt)

@@ -30,7 +30,6 @@ class AnalysisReportEntityTest {
         domainReport = AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
-                .userId("user-123")
                 .components(List.of(
                         ComponentData.builder()
                                 .id("comp-1")
@@ -58,9 +57,6 @@ class AnalysisReportEntityTest {
                 .generatedAt(LocalDateTime.now())
                 .generatedBy("AI_SERVICE")
                 .status(ReportStatus.ANALISADO)
-                .aiModelVersion("gpt-4")
-                .confidenceScore(0.9)
-                .processingTimeMs(1000L)
                 .build();
     }
 
@@ -71,11 +67,7 @@ class AnalysisReportEntityTest {
         assertThat(entity).isNotNull();
         assertThat(entity.getId()).isEqualTo(domainReport.getId());
         assertThat(entity.getDiagramId()).isEqualTo(domainReport.getDiagramId());
-        assertThat(entity.getUserId()).isEqualTo(domainReport.getUserId());
         assertThat(entity.getStatus()).isEqualTo(domainReport.getStatus());
-        assertThat(entity.getAiModelVersion()).isEqualTo(domainReport.getAiModelVersion());
-        assertThat(entity.getConfidenceScore()).isEqualTo(domainReport.getConfidenceScore());
-        assertThat(entity.getProcessingTimeMs()).isEqualTo(domainReport.getProcessingTimeMs());
     }
 
     @Test
@@ -86,7 +78,6 @@ class AnalysisReportEntityTest {
         assertThat(converted).isNotNull();
         assertThat(converted.getId()).isEqualTo(entity.getId());
         assertThat(converted.getDiagramId()).isEqualTo(entity.getDiagramId());
-        assertThat(converted.getUserId()).isEqualTo(entity.getUserId());
         assertThat(converted.getStatus()).isEqualTo(entity.getStatus());
     }
 

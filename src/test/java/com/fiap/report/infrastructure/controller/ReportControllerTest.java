@@ -156,7 +156,6 @@ class ReportControllerTest {
         AnalysisReport report = AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
-                .userId("user-123")
                 .generatedAt(LocalDateTime.now())
                 .status(ReportStatus.ANALISADO)
                 .components(List.of(ComponentData.builder()
@@ -214,7 +213,6 @@ class ReportControllerTest {
         AnalysisReport existingReport = AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
-                .userId("user-123")
                 .status(ReportStatus.ANALISADO)
                 .build();
 
@@ -241,7 +239,6 @@ class ReportControllerTest {
         AnalysisReport report = AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(UUID.randomUUID())
-                .userId("user-123")
                 .status(ReportStatus.ANALISADO)
                 .build();
 
@@ -261,7 +258,6 @@ class ReportControllerTest {
         AnalysisReport report = AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
-                .userId("user-123")
                 .status(ReportStatus.ANALISADO)
                 .build();
 
@@ -293,7 +289,6 @@ class ReportControllerTest {
         AnalysisReport report = AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
-                .userId("user-123")
                 .status(ReportStatus.ANALISADO)
                 .build();
 
@@ -354,7 +349,6 @@ class ReportControllerTest {
         AnalysisReport report = AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(UUID.nameUUIDFromBytes(uploadId.getBytes()))
-                .userId("user-123")
                 .status(ReportStatus.ANALISADO)
                 .build();
 
@@ -375,7 +369,6 @@ class ReportControllerTest {
         AnalysisReport reportRecebido = AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
-                .userId("user-123")
                 .status(ReportStatus.RECEBIDO)
                 .build();
 
@@ -388,7 +381,6 @@ class ReportControllerTest {
         AnalysisReport reportProcessando = AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
-                .userId("user-123")
                 .status(ReportStatus.EM_PROCESSAMENTO)
                 .build();
 
@@ -401,7 +393,6 @@ class ReportControllerTest {
         AnalysisReport reportAnalisado = AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
-                .userId("user-123")
                 .status(ReportStatus.ANALISADO)
                 .build();
 
@@ -414,7 +405,6 @@ class ReportControllerTest {
         AnalysisReport reportErro = AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
-                .userId("user-123")
                 .status(ReportStatus.ERRO)
                 .build();
 
@@ -432,7 +422,6 @@ class ReportControllerTest {
         AnalysisReport reportNullStatus = AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
-                .userId("user-123")
                 .status(null)
                 .build();
 
@@ -457,7 +446,6 @@ class ReportControllerTest {
         AnalysisReport report = AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
-                .userId("default-user")
                 .status(ReportStatus.ANALISADO)
                 .build();
 
