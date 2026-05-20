@@ -20,22 +20,17 @@ public class AnalysisReport {
 
     private UUID id;
     private UUID diagramId;
-    private String userId;
     private List<ComponentData> components;
     private List<RiskData> risks;
     private List<RecommendationData> recommendations;
     private LocalDateTime generatedAt;
     private String generatedBy;
     private ReportStatus status;
-    private String aiModelVersion;
-    private Double confidenceScore;
-    private Long processingTimeMs;
 
     public static AnalysisReport create(UUID diagramId, String userId) {
         return AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
-                .userId(userId)
                 .generatedAt(LocalDateTime.now())
                 .generatedBy("AI_SERVICE")
                 .status(ReportStatus.RECEBIDO)

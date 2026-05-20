@@ -52,13 +52,9 @@ public class CreateReportUseCaseImpl implements CreateReportUseCase {
 
             AnalysisReport report = AnalysisReport.builder()
                     .diagramId(diagramId)
-                    .userId(aiResult.getUserId())
                     .components(components)
                     .risks(risks)
                     .recommendations(recommendations)
-                    .aiModelVersion(aiResult.getModelVersion())
-                    .confidenceScore(aiResult.getConfidenceScore())
-                    .processingTimeMs(aiResult.getProcessingTimeMs())
                     .status(ReportStatus.ANALISADO)
                     .build();
 

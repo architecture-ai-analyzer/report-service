@@ -163,13 +163,9 @@ public class ReportController {
 
         return AIAnalysisResult.builder()
                 .diagramId(diagramId)
-                .userId((String) metadata.getOrDefault("userId", "default-user"))
                 .extractedComponents(components)
                 .identifiedRisks(risks)
                 .generatedRecommendations(recommendations)
-                .modelVersion((String) metadata.getOrDefault("modelVersion", "unknown"))
-                .confidenceScore(((Number) metadata.getOrDefault("confidenceScore", 0.0)).doubleValue())
-                .processingTimeMs(((Number) metadata.getOrDefault("processingTimeMs", 0)).longValue())
                 .build();
     }
 

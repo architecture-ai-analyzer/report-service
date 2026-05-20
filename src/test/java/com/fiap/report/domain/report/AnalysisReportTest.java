@@ -17,7 +17,6 @@ class AnalysisReportTest {
 
         assertThat(report).isNotNull();
         assertThat(report.getDiagramId()).isEqualTo(diagramId);
-        assertThat(report.getUserId()).isEqualTo(userId);
         assertThat(report.getStatus()).isEqualTo(ReportStatus.RECEBIDO);
         assertThat(report.getGeneratedAt()).isNotNull();
         assertThat(report.getGeneratedBy()).isEqualTo("AI_SERVICE");
@@ -30,7 +29,6 @@ class AnalysisReportTest {
         AnalysisReport report = AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
-                .userId("user-123")
                 .status(ReportStatus.ANALISADO)
                 .generatedAt(java.time.LocalDateTime.now())
                 .build();
