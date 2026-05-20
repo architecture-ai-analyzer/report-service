@@ -165,6 +165,7 @@
                                 <exclude>**/dto/**</exclude>
                                 <exclude>**/entity/**</exclude>
                                 <exclude>**/adapter/**</exclude>
+                                <exclude>**/pdf/**</exclude>
                                 <exclude>**/*Application.class</exclude>
                                 <exclude>**/*Config.class</exclude>
                                 <exclude>**/*Request.class</exclude>

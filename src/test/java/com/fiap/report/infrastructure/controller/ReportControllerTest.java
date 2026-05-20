@@ -481,4 +481,28 @@ class ReportControllerTest {
 
         assertThat(response.getStatusCode().is4xxClientError());
     }
+
+    @Test
+    void downloadReport_withError_returnsNotFound() {
+        String uploadId = "upload-123";
+        UUID diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
+
+        when(generateReportPdfUseCase.execute(diagramId)).thenThrow(new RuntimeException("PDF generation error"));
+
+        ResponseEntity<byte[]> response = controller.downloadReport(uploadId);
+
+        assertThat(response.getStatusCode().is4xxClientError());
+    }
+
+    @Test
+    void getProcessingStatus_withException_returnsBadRequest() {
+        String uploadId = "upload-123";
+        UUID diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
+
+        when(findReportByDiagramIdUseCase.execute(diagramId)).thenThrow(new RuntimeException("Database error"));
+
+        ResponseEntity<ProcessingStatusResponse> response = controller.getProcessingStatus(uploadId);
+
+        assertThat(response.getStatusCode().is4xxClientError());
+    }
 }

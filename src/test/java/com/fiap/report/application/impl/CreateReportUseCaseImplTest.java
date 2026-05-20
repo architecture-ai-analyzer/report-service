@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -78,5 +79,46 @@ class CreateReportUseCaseImplTest {
         org.mockito.Mockito.verify(repository).save(captor.capture());
         AnalysisReport passed = captor.getValue();
         assertThat(passed.getStatus()).isEqualTo(com.fiap.report.domain.report.ReportStatus.ANALISADO);
+    }
+
+    @Test
+    void execute_repositoryThrowsException_wrapsInRuntimeException() {
+        UUID diagramId = UUID.randomUUID();
+
+        AIAnalysisResult ai = AIAnalysisResult.builder()
+                .diagramId(diagramId)
+                .extractedComponents(List.of())
+                .identifiedRisks(List.of())
+                .generatedRecommendations(List.of())
+                .build();
+
+        when(repository.save(any())).thenThrow(new RuntimeException("database error"));
+
+        assertThatThrownBy(() -> useCase.execute(diagramId, ai))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to create report");
+    }
+
+    @Test
+    void execute_invalidComponentType_throwsException() {
+        UUID diagramId = UUID.randomUUID();
+
+        AIAnalysisResult ai = AIAnalysisResult.builder()
+                .diagramId(diagramId)
+                .extractedComponents(List.of(ExtractedComponent.builder()
+                        .name("Invalid Component")
+                        .type("INVALID_TYPE")
+                        .connections(List.of())
+                        .properties(java.util.Map.of())
+                        .technology("Test")
+                        .description("Test")
+                        .build()))
+                .identifiedRisks(List.of())
+                .generatedRecommendations(List.of())
+                .build();
+
+        assertThatThrownBy(() -> useCase.execute(diagramId, ai))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to create report");
     }
 }

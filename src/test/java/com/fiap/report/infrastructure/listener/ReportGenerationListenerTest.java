@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -202,5 +203,70 @@ class ReportGenerationListenerTest {
         InOrder inOrder = inOrder(statusGateway);
         inOrder.verify(statusGateway).updateStatus(diagramId, "EM_PROCESSAMENTO");
         inOrder.verify(statusGateway).updateStatus(diagramId, "ERRO");
+    }
+
+    @Test
+    void shouldHandleStatusUpdateFailureGracefully() throws Exception {
+        UUID diagramId = UUID.randomUUID();
+        String uploadId = diagramId.toString();
+
+        Map<String, Object> payload = Map.of(
+                "uploadId", uploadId,
+                "analysis", Map.of(
+                        "components", List.of(),
+                        "risks", List.of(),
+                        "recommendations", List.of()
+                ),
+                "metadata", Map.of(
+                        "userId", "user-123",
+                        "modelVersion", "gpt-4",
+                        "confidenceScore", 0.92,
+                        "processingTimeMs", 1200
+                )
+        );
+
+        String message = objectMapper.writeValueAsString(payload);
+
+        when(createReportUseCase.execute(eq(diagramId), any(AIAnalysisResult.class)))
+                .thenThrow(new RuntimeException("database error"));
+        doThrow(new RuntimeException("status update failed"))
+                .when(statusGateway).updateStatus(eq(diagramId), eq("ERRO"));
+
+        listener.handleReportGeneration(message);
+
+        verify(statusGateway).updateStatus(diagramId, "EM_PROCESSAMENTO");
+        verify(statusGateway).updateStatus(diagramId, "ERRO");
+    }
+
+    @Test
+    void shouldHandleInvalidMessageFormat() throws Exception {
+        String message = "invalid json";
+
+        listener.handleReportGeneration(message);
+
+        verify(statusGateway).updateStatus(any(UUID.class), eq("ERRO"));
+    }
+
+    @Test
+    void shouldHandleMissingUploadId() throws Exception {
+        Map<String, Object> payload = Map.of(
+                "analysis", Map.of(
+                        "components", List.of(),
+                        "risks", List.of(),
+                        "recommendations", List.of()
+                ),
+                "metadata", Map.of(
+                        "userId", "user-123",
+                        "modelVersion", "gpt-4",
+                        "confidenceScore", 0.92,
+                        "processingTimeMs", 1200
+                )
+        );
+
+        String message = objectMapper.writeValueAsString(payload);
+
+        listener.handleReportGeneration(message);
+
+        verify(statusGateway).updateStatus(any(UUID.class), eq("ERRO"));
     }
 }
