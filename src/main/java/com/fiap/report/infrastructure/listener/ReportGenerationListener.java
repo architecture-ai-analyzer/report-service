@@ -59,8 +59,7 @@ public class ReportGenerationListener {
             
             String uploadId = (String) messageData.get("uploadId");
             Map<String, Object> analysis = (Map<String, Object>) messageData.get("analysis");
-            Map<String, Object> metadata = (Map<String, Object>) messageData.get("metadata");
-            
+
             // Converter para diagramId UUID
             UUID diagramId = convertToUUID(uploadId);
             
@@ -89,13 +88,9 @@ public class ReportGenerationListener {
             // Criar AIAnalysisResult
             AIAnalysisResult aiResult = AIAnalysisResult.builder()
                     .diagramId(diagramId)
-                    .userId((String) metadata.getOrDefault("userId", "system"))
                     .extractedComponents(components)
                     .identifiedRisks(risks)
                     .generatedRecommendations(recommendations)
-                    .modelVersion((String) metadata.getOrDefault("modelVersion", "unknown"))
-                    .confidenceScore(((Number) metadata.getOrDefault("confidenceScore", 0.0)).doubleValue())
-                    .processingTimeMs(((Number) metadata.getOrDefault("processingTimeMs", 0)).longValue())
                     .build();
             
             // Criar relatório

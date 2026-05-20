@@ -15,7 +15,6 @@ import java.util.UUID;
 public class ReportSummaryResponse {
     private UUID id;
     private UUID diagramId;
-    private String userId;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -24,7 +23,6 @@ public class ReportSummaryResponse {
         return ReportSummaryResponse.builder()
                 .id(report.getId())
                 .diagramId(report.getDiagramId())
-                .userId(report.getUserId())
                 .status(report.getStatus().name())
                 .createdAt(report.getGeneratedAt())
                 .updatedAt(report.getGeneratedAt())

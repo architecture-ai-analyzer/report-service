@@ -35,9 +35,6 @@ public class AnalysisReportEntity {
     @Column(name = "diagram_id", nullable = false, unique = true)
     private UUID diagramId;
 
-    @Column(name = "user_id", nullable = false)
-    private String userId;
-
     @Column(name = "components", columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
     @Convert(converter = ComponentDataListConverter.class)
@@ -63,15 +60,6 @@ public class AnalysisReportEntity {
     @Column(name = "status", nullable = false)
     private ReportStatus status;
 
-    @Column(name = "ai_model_version")
-    private String aiModelVersion;
-
-    @Column(name = "confidence_score")
-    private Double confidenceScore;
-
-    @Column(name = "processing_time_ms")
-    private Long processingTimeMs;
-
     @PrePersist
     public void prePersist() {
         if (id == null) {
@@ -92,16 +80,12 @@ public class AnalysisReportEntity {
         return AnalysisReportEntity.builder()
                 .id(report.getId())
                 .diagramId(report.getDiagramId())
-                .userId(report.getUserId())
                 .components(report.getComponents())
                 .risks(report.getRisks())
                 .recommendations(report.getRecommendations())
                 .generatedAt(report.getGeneratedAt())
                 .generatedBy(report.getGeneratedBy())
                 .status(report.getStatus())
-                .aiModelVersion(report.getAiModelVersion())
-                .confidenceScore(report.getConfidenceScore())
-                .processingTimeMs(report.getProcessingTimeMs())
                 .build();
     }
 
@@ -109,16 +93,12 @@ public class AnalysisReportEntity {
         return AnalysisReport.builder()
                 .id(id)
                 .diagramId(diagramId)
-                .userId(userId)
                 .components(components)
                 .risks(risks)
                 .recommendations(recommendations)
                 .generatedAt(generatedAt)
                 .generatedBy(generatedBy)
                 .status(status)
-                .aiModelVersion(aiModelVersion)
-                .confidenceScore(confidenceScore)
-                .processingTimeMs(processingTimeMs)
                 .build();
     }
 }
