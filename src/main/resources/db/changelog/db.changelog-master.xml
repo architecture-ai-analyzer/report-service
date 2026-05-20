@@ -8,16 +8,13 @@
         <createTable tableName="analysis_reports">
             <column name="id" type="uuid" constraints="primaryKey:true"/>
             <column name="diagram_id" type="uuid"/>
-            <column name="user_id" type="varchar(255)"/>
+            <column name="template_id" type="varchar(255)"/>
             <column name="components" type="jsonb"/>
             <column name="risks" type="jsonb"/>
             <column name="recommendations" type="jsonb"/>
             <column name="generated_at" type="timestamp"/>
             <column name="generated_by" type="varchar(255)"/>
             <column name="status" type="varchar(50)"/>
-            <column name="ai_model_version" type="varchar(100)"/>
-            <column name="confidence_score" type="decimal(5,4)"/>
-            <column name="processing_time_ms" type="bigint"/>
         </createTable>
     </changeSet>
 

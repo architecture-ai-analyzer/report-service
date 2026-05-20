@@ -40,14 +40,10 @@ public class TestController {
 
         AIAnalysisResult aiResult = AIAnalysisResult.builder()
                 .diagramId(UUID.randomUUID())
-                .userId("test-user-123")
                 .templateId("template-teste-123")
                 .extractedComponents(createTestComponents())
                 .identifiedRisks(createTestRisks())
                 .generatedRecommendations(createTestRecommendations())
-                .modelVersion("gpt-4-vision-preview")
-                .confidenceScore(0.92)
-                .processingTimeMs(2500L)
                 .build();
 
         try {

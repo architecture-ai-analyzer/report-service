@@ -146,7 +146,6 @@ class ReportGenerationListenerTest {
         AnalysisReport createdReport = AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
-                .userId("user-123")
                 .generatedAt(LocalDateTime.now())
                 .status(ReportStatus.ANALISADO)
                 .components(List.of())
@@ -168,10 +167,6 @@ class ReportGenerationListenerTest {
         AIAnalysisResult actual = captor.getValue();
 
         assertThat(actual.getDiagramId()).isEqualTo(diagramId);
-        assertThat(actual.getUserId()).isEqualTo("user-123");
-        assertThat(actual.getModelVersion()).isEqualTo("gpt-4");
-        assertThat(actual.getConfidenceScore()).isEqualTo(0.92);
-        assertThat(actual.getProcessingTimeMs()).isEqualTo(1200L);
         assertThat(actual.getExtractedComponents()).containsExactly(component);
         assertThat(actual.getIdentifiedRisks()).containsExactly(risk);
         assertThat(actual.getGeneratedRecommendations()).containsExactly(recommendation);

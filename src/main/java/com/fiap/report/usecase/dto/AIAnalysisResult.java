@@ -15,13 +15,9 @@ import java.util.UUID;
 @AllArgsConstructor
 public class AIAnalysisResult {
     private UUID diagramId;
-    private String userId;
     private String templateId;
     private List<ExtractedComponent> extractedComponents;
     private List<IdentifiedRisk> identifiedRisks;
     private List<GeneratedRecommendation> generatedRecommendations;
-    private String modelVersion;
-    private Double confidenceScore;
-    private Long processingTimeMs;
     private LocalDateTime processedAt;
 }

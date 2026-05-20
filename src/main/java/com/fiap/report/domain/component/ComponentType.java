@@ -8,9 +8,10 @@ public enum ComponentType {
     LOAD_BALANCER("Load Balancer"),
     MICROSERVICE("Microservice"),
     FRONTEND("Frontend"),
-    EXTERNAL_SERVICE("External Service"),
+    EXTERNAL("External Service"),
     MESSAGE_BROKER("Message Broker"),
-    STORAGE("Storage");
+    STORAGE("Storage"),
+    SERVICE("Service");
 
     private final String displayName;
 

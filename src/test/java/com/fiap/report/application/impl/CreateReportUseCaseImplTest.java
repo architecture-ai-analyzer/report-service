@@ -34,7 +34,6 @@ class CreateReportUseCaseImplTest {
 
         AIAnalysisResult ai = AIAnalysisResult.builder()
                 .diagramId(diagramId)
-                .userId("user1")
                 .extractedComponents(List.of(ExtractedComponent.builder()
                         .name("API Gateway")
                         .type("API")
@@ -63,9 +62,6 @@ class CreateReportUseCaseImplTest {
                         .targetComponent("comp-1")
                         .steps(List.of("s1"))
                         .build()))
-                .modelVersion("v1")
-                .confidenceScore(0.9)
-                .processingTimeMs(100L)
                 .build();
 
         AnalysisReport saved = AnalysisReport.create(diagramId, "user1");
