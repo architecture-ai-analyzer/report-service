@@ -1,6 +1,7 @@
 package com.fiap.report.infrastructure.controller;
 
 import com.fiap.report.domain.report.AnalysisReport;
+import com.fiap.report.domain.report.ReportStatus;
 import com.fiap.report.gateway.StatusGateway;
 import com.fiap.report.infrastructure.mapper.AIAnalysisMapper;
 import com.fiap.report.usecase.CreateReportUseCase;
@@ -164,14 +165,14 @@ public class ReportController {
                 .id(report.getDiagramId())
                 .status(status != null ? status.name() : "UNKNOWN")
                 .progress(mapProgress(status))
-                .estimatedTimeRemaining(status == null || status == com.fiap.report.domain.report.ReportStatus.ANALISADO ? "0 minutos" : "Desconhecido")
+                .estimatedTimeRemaining(status == null || status == ReportStatus.ANALISADO ? "0 minutos" : "Desconhecido")
                 .currentStep(status != null ? status.getDisplayName() : "Status desconhecido")
                 .createdAt(report.getGeneratedAt())
                 .updatedAt(report.getGeneratedAt())
                 .build();
     }
 
-    private int mapProgress(com.fiap.report.domain.report.ReportStatus status) {
+    private int mapProgress(ReportStatus status) {
         if (status == null) {
             return 0;
         }
