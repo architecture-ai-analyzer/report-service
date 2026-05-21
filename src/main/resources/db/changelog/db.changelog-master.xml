@@ -8,6 +8,7 @@
         <createTable tableName="analysis_reports">
             <column name="id" type="uuid" constraints="primaryKey:true"/>
             <column name="diagram_id" type="uuid"/>
+            <column name="template_id" type="varchar(255)"/>
             <column name="components" type="jsonb"/>
             <column name="risks" type="jsonb"/>
             <column name="recommendations" type="jsonb"/>
@@ -15,6 +16,12 @@
             <column name="generated_by" type="varchar(255)"/>
             <column name="status" type="varchar(50)"/>
         </createTable>
+    </changeSet>
+
+    <changeSet id="2" author="system">
+        <addColumn tableName="analysis_reports">
+            <column name="template_id" type="varchar(255)"/>
+        </addColumn>
     </changeSet>
 
 </databaseChangeLog>

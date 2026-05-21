@@ -102,6 +102,11 @@
             <artifactId>postgresql</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>1.3.30</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -160,6 +165,7 @@
                                 <exclude>**/dto/**</exclude>
                                 <exclude>**/entity/**</exclude>
                                 <exclude>**/adapter/**</exclude>
+                                <exclude>**/pdf/**</exclude>
                                 <exclude>**/*Application.class</exclude>
                                 <exclude>**/*Config.class</exclude>
                                 <exclude>**/*Request.class</exclude>

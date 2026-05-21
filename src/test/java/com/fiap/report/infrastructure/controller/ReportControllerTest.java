@@ -18,6 +18,7 @@ import com.fiap.report.infrastructure.dto.ReportResponse;
 import com.fiap.report.infrastructure.dto.ReportSummaryResponse;
 import com.fiap.report.usecase.CreateReportUseCase;
 import com.fiap.report.usecase.FindReportByDiagramIdUseCase;
+import com.fiap.report.usecase.GenerateReportPdfUseCase;
 import com.fiap.report.usecase.GetReportUseCase;
 import com.fiap.report.usecase.ListReportsUseCase;
 import com.fiap.report.usecase.dto.AIAnalysisResult;
@@ -56,6 +57,9 @@ class ReportControllerTest {
     private GetReportUseCase getReportUseCase;
 
     @Mock
+    private GenerateReportPdfUseCase generateReportPdfUseCase;
+
+    @Mock
     private ListReportsUseCase listReportsUseCase;
 
     @Mock
@@ -69,7 +73,7 @@ class ReportControllerTest {
     @BeforeEach
     void setUp() {
         controller = new ReportController(createReportUseCase, findReportByDiagramIdUseCase,
-                getReportUseCase, listReportsUseCase, statusGateway, aiAnalysisMapper);
+                getReportUseCase, generateReportPdfUseCase, listReportsUseCase, statusGateway, aiAnalysisMapper);
     }
 
     @Test
@@ -316,12 +320,16 @@ class ReportControllerTest {
     @Test
     void downloadReport_returnsPdf() {
         String uploadId = "upload-123";
+        UUID diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
+        byte[] pdfBytes = "%PDF-1.4".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+        when(generateReportPdfUseCase.execute(diagramId)).thenReturn(pdfBytes);
 
         ResponseEntity<byte[]> response = controller.downloadReport(uploadId);
 
         assertThat(response.getStatusCode().is2xxSuccessful());
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().length).isGreaterThan(0);
+        assertThat(response.getBody()).containsExactly(pdfBytes);
     }
 
     @Test
@@ -470,6 +478,30 @@ class ReportControllerTest {
         doThrow(new RuntimeException("Status update error")).when(statusGateway).updateStatus(any(), any());
 
         ResponseEntity<ReportResponse> response = controller.generateReport(uploadId, requestBody);
+
+        assertThat(response.getStatusCode().is4xxClientError());
+    }
+
+    @Test
+    void downloadReport_withError_returnsNotFound() {
+        String uploadId = "upload-123";
+        UUID diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
+
+        when(generateReportPdfUseCase.execute(diagramId)).thenThrow(new RuntimeException("PDF generation error"));
+
+        ResponseEntity<byte[]> response = controller.downloadReport(uploadId);
+
+        assertThat(response.getStatusCode().is4xxClientError());
+    }
+
+    @Test
+    void getProcessingStatus_withException_returnsBadRequest() {
+        String uploadId = "upload-123";
+        UUID diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
+
+        when(findReportByDiagramIdUseCase.execute(diagramId)).thenThrow(new RuntimeException("Database error"));
+
+        ResponseEntity<ProcessingStatusResponse> response = controller.getProcessingStatus(uploadId);
 
         assertThat(response.getStatusCode().is4xxClientError());
     }

@@ -20,6 +20,7 @@ public class AnalysisReport {
 
     private UUID id;
     private UUID diagramId;
+    private String templateId;
     private List<ComponentData> components;
     private List<RiskData> risks;
     private List<RecommendationData> recommendations;
@@ -27,10 +28,11 @@ public class AnalysisReport {
     private String generatedBy;
     private ReportStatus status;
 
-    public static AnalysisReport create(UUID diagramId, String userId) {
+    public static AnalysisReport create(UUID diagramId, String templateId) {
         return AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
+                .templateId(templateId)
                 .generatedAt(LocalDateTime.now())
                 .generatedBy("AI_SERVICE")
                 .status(ReportStatus.RECEBIDO)

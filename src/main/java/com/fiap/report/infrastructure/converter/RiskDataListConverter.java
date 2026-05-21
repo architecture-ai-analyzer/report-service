@@ -15,12 +15,21 @@ import java.util.List;
 @Converter
 public class RiskDataListConverter implements AttributeConverter<List<RiskData>, String> {
 
-    private static final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-    static {
-        objectMapper = new ObjectMapper();
-        objectMapper.findAndRegisterModules();
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    public RiskDataListConverter() {
+        this(createDefaultObjectMapper());
+    }
+
+    RiskDataListConverter(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
+    private static ObjectMapper createDefaultObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.findAndRegisterModules();
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return mapper;
     }
 
     @Override

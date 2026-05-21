@@ -15,36 +15,38 @@ import java.util.List;
 @AllArgsConstructor
 public class ReportResponse {
     private String generatedAt;
+    private String templateId;
     private SummaryResponse summary;
     private List<ComponentResponse> detectedComponents;
     private SecurityAnalysisResponse securityAnalysis;
     private ArchitectureAnalysisResponse architectureAnalysis;
     private PerformanceAnalysisResponse performanceAnalysis;
     private List<Recommendation> recommendations;
-    
+
     public static ReportResponse from(AnalysisReport report) {
-        List<ComponentResponse> components = report.getComponents() != null 
+        List<ComponentResponse> components = report.getComponents() != null
                 ? report.getComponents().stream().map(ComponentResponse::from).toList()
                 : List.of();
-        
-        List<RiskResponse> risks = report.getRisks() != null 
+
+        List<RiskResponse> risks = report.getRisks() != null
                 ? report.getRisks().stream().map(RiskResponse::from).toList()
                 : List.of();
-        
-        List<Recommendation> recommendations = report.getRecommendations() != null 
+
+        List<Recommendation> recommendations = report.getRecommendations() != null
                 ? report.getRecommendations().stream().map(Recommendation::from).toList()
                 : List.of();
-        
-        SummaryResponse summary = components.isEmpty() || risks.isEmpty() 
+
+        SummaryResponse summary = components.isEmpty() || risks.isEmpty()
                 ? SummaryResponse.defaultSummary()
                 : SummaryResponse.from(components.size(), risks);
-        
+
         SecurityAnalysisResponse securityAnalysis = SecurityAnalysisResponse.from(risks);
         ArchitectureAnalysisResponse architectureAnalysis = ArchitectureAnalysisResponse.from(components);
         PerformanceAnalysisResponse performanceAnalysis = PerformanceAnalysisResponse.from(components);
-        
+
         return ReportResponse.builder()
                 .generatedAt(report.getGeneratedAt() != null ? report.getGeneratedAt().toString() : "2026-03-29T06:04:20.698397Z")
+                .templateId(report.getTemplateId())
                 .summary(summary)
                 .detectedComponents(components)
                 .securityAnalysis(securityAnalysis)
@@ -67,7 +69,7 @@ class Recommendation {
     private String effort;
     private String impact;
     private List<String> steps;
-    
+
     public static Recommendation from(RecommendationData recommendation) {
         return Recommendation.builder()
                 .title(recommendation.getDescription())

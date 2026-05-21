@@ -1,5 +1,7 @@
 package com.fiap.report.infrastructure.converter;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fiap.report.domain.risk.RiskCategory;
 import com.fiap.report.domain.risk.RiskData;
 import com.fiap.report.domain.risk.RiskLevel;
@@ -8,6 +10,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class RiskDataListConverterTest {
 
@@ -43,5 +48,29 @@ class RiskDataListConverterTest {
     void convertToEntityAttribute_invalidJson_returnsEmptyList() {
         var list = converter.convertToEntityAttribute("invalid json");
         assertThat(list).isEmpty();
+    }
+
+    @Test
+    void convertToEntityAttribute_malformedJson_returnsEmptyList() {
+        var list = converter.convertToEntityAttribute("{invalid}");
+        assertThat(list).isEmpty();
+    }
+
+    @Test
+    void convertToDatabaseColumn_serializationError_returnsEmptyJson() throws JsonProcessingException {
+        ObjectMapper mockObjectMapper = mock(ObjectMapper.class);
+        when(mockObjectMapper.writeValueAsString(any())).thenThrow(new JsonProcessingException("Serialization error") {});
+
+        RiskDataListConverter testConverter = new RiskDataListConverter(mockObjectMapper);
+
+        RiskData r = RiskData.builder()
+                .id("rk1")
+                .description("Failover missing")
+                .level(RiskLevel.HIGH)
+                .category(RiskCategory.RELIABILITY)
+                .build();
+
+        String json = testConverter.convertToDatabaseColumn(List.of(r));
+        assertThat(json).isEqualTo("[]");
     }
 }

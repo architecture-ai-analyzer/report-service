@@ -1,5 +1,7 @@
 package com.fiap.report.infrastructure.converter;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fiap.report.domain.component.ComponentData;
 import com.fiap.report.domain.component.ComponentType;
 import org.junit.jupiter.api.Test;
@@ -7,6 +9,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class ComponentDataListConverterTest {
 
@@ -44,5 +49,31 @@ class ComponentDataListConverterTest {
     void convertToEntityAttribute_invalidJson_returnsEmptyList() {
         var list = converter.convertToEntityAttribute("invalid json");
         assertThat(list).isEmpty();
+    }
+
+    @Test
+    void convertToEntityAttribute_malformedJson_returnsEmptyList() {
+        var list = converter.convertToEntityAttribute("{invalid}");
+        assertThat(list).isEmpty();
+    }
+
+    @Test
+    void convertToDatabaseColumn_serializationError_returnsEmptyJson() throws JsonProcessingException {
+        ObjectMapper mockObjectMapper = mock(ObjectMapper.class);
+        when(mockObjectMapper.writeValueAsString(any())).thenThrow(new JsonProcessingException("Serialization error") {});
+
+        ComponentDataListConverter testConverter = new ComponentDataListConverter(mockObjectMapper);
+
+        ComponentData c = ComponentData.builder()
+                .id("id1")
+                .name("API Gateway")
+                .type(ComponentType.API)
+                .technology("Spring")
+                .description("desc")
+                .connections(List.of("svc1"))
+                .build();
+
+        String json = testConverter.convertToDatabaseColumn(List.of(c));
+        assertThat(json).isEqualTo("[]");
     }
 }

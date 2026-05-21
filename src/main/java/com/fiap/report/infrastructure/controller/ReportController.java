@@ -1,5 +1,7 @@
 package com.fiap.report.infrastructure.controller;
 
+import com.fiap.report.domain.report.AnalysisReport;
+import com.fiap.report.domain.report.ReportStatus;
 import com.fiap.report.gateway.StatusGateway;
 import com.fiap.report.infrastructure.mapper.AIAnalysisMapper;
 import com.fiap.report.usecase.CreateReportUseCase;
@@ -13,16 +15,18 @@ import com.fiap.report.usecase.dto.GeneratedRecommendation;
 import com.fiap.report.infrastructure.dto.ProcessingStatusResponse;
 import com.fiap.report.infrastructure.dto.ReportResponse;
 import com.fiap.report.infrastructure.dto.ReportSummaryResponse;
+import com.fiap.report.usecase.GenerateReportPdfUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 @Slf4j
 @RestController
@@ -34,6 +38,7 @@ public class ReportController {
     private final CreateReportUseCase createReportUseCase;
     private final FindReportByDiagramIdUseCase findReportByDiagramIdUseCase;
     private final GetReportUseCase getReportUseCase;
+    private final GenerateReportPdfUseCase generateReportPdfUseCase;
     private final ListReportsUseCase listReportsUseCase;
     private final StatusGateway statusGateway;
     private final AIAnalysisMapper aiAnalysisMapper;
@@ -49,7 +54,7 @@ public class ReportController {
         try {
             UUID diagramId = convertToUUID(uploadId);
 
-            Optional<com.fiap.report.domain.report.AnalysisReport> existingReport = findReportByDiagramIdUseCase.execute(diagramId);
+            Optional<AnalysisReport> existingReport = findReportByDiagramIdUseCase.execute(diagramId);
             if (existingReport.isPresent()) {
                 log.info("Report already exists for upload: {}, returning existing report: {}", uploadId, existingReport.get().getId());
                 return ResponseEntity.ok(ReportResponse.from(existingReport.get()));
@@ -76,16 +81,14 @@ public class ReportController {
         }
     }
 
-    // Endpoint para listar relatórios (usado em /reports)
     @GetMapping
     public ResponseEntity<List<ReportSummaryResponse>> listReports(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
+
         log.info("Listing reports - page: {}, size: {}", page, size);
-        
-        // TODO: Implementar paginação real
-        var reportsPage = listReportsUseCase.execute("default-user", 
+
+        var reportsPage = listReportsUseCase.execute("default-user",
                 PageRequest.of(page, size));
         List<ReportSummaryResponse> reports = reportsPage.getContent().stream()
                 .map(ReportSummaryResponse::from)
@@ -93,32 +96,21 @@ public class ReportController {
         return ResponseEntity.ok(reports);
     }
 
-    // Endpoint para obter relatório específico (usado em /reports/{uploadId})
     @GetMapping("/{uploadId}")
     public ResponseEntity<ReportResponse> getReport(@PathVariable String uploadId) {
         log.info("Getting report for upload: {}", uploadId);
 
         try {
-            // ✅ CORREÇÃO: Aceitar tanto UUID quanto string normal
-            UUID diagramId;
-            try {
-                diagramId = UUID.fromString(uploadId);
-            } catch (IllegalArgumentException e) {
-                // Se não for UUID, criar um UUID consistente baseado na string
-                diagramId = UUID.nameUUIDFromBytes(uploadId.getBytes());
-            }
-            
-            // ✅ Forçar nova transação para evitar cache problems
+            UUID diagramId = convertToUUID(uploadId);
             var report = getReportUseCase.execute(diagramId);
             return ResponseEntity.ok(ReportResponse.from(report));
-            
+
         } catch (Exception e) {
             log.error("Error getting report for upload: {} - Error: {}", uploadId, e.getMessage(), e);
             return ResponseEntity.notFound().build();
         }
     }
 
-    // Endpoint para status do processamento (usado em /status/{uploadId})
     @GetMapping("/{uploadId}/status")
     public ResponseEntity<ProcessingStatusResponse> getProcessingStatus(@PathVariable String uploadId) {
         log.info("Getting status for upload: {}", uploadId);
@@ -169,20 +161,20 @@ public class ReportController {
                 .build();
     }
 
-    private ProcessingStatusResponse mapToProcessingStatusResponse(com.fiap.report.domain.report.AnalysisReport report) {
+    private ProcessingStatusResponse mapToProcessingStatusResponse(AnalysisReport report) {
         var status = report.getStatus();
         return ProcessingStatusResponse.builder()
                 .id(report.getDiagramId())
                 .status(status != null ? status.name() : "UNKNOWN")
                 .progress(mapProgress(status))
-                .estimatedTimeRemaining(status == null || status == com.fiap.report.domain.report.ReportStatus.ANALISADO ? "0 minutos" : "Desconhecido")
+                .estimatedTimeRemaining(status == null || status == ReportStatus.ANALISADO ? "0 minutos" : "Desconhecido")
                 .currentStep(status != null ? status.getDisplayName() : "Status desconhecido")
                 .createdAt(report.getGeneratedAt())
                 .updatedAt(report.getGeneratedAt())
                 .build();
     }
 
-    private int mapProgress(com.fiap.report.domain.report.ReportStatus status) {
+    private int mapProgress(ReportStatus status) {
         if (status == null) {
             return 0;
         }
@@ -207,59 +199,26 @@ public class ReportController {
         }
     }
 
-    // Endpoint para download do relatório (usado no botão de download)
     @GetMapping("/{uploadId}/download")
     public ResponseEntity<byte[]> downloadReport(@PathVariable String uploadId) {
         log.info("Downloading report: {}", uploadId);
 
         try {
-            // ✅ CORREÇÃO: Gerar PDF válido
-            String reportContent = generateValidPdfContent(uploadId);
-            
+            UUID diagramId = convertToUUID(uploadId);
+            byte[] reportContent = generateReportPdfUseCase.execute(diagramId);
+
+            String filename = "report-" + uploadId + ".pdf";
+            String encodedFilename = URLEncoder.encode(filename, StandardCharsets.UTF_8);
+
             return ResponseEntity.ok()
-                    .header("Content-Type", "application/pdf")
-                    .header("Content-Disposition", "attachment; filename=report-" + uploadId + ".pdf")
-                    .body(reportContent.getBytes());
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + filename + "\"; filename*=UTF-8''" + encodedFilename)
+                    .body(reportContent);
+
         } catch (Exception e) {
             log.error("Error downloading report for upload: {}", uploadId, e);
             return ResponseEntity.notFound().build();
         }
-    }
-
-    private String generateValidPdfContent(String uploadId) {
-        // PDF ultra-simples para teste
-        return "%PDF-1.1\n" +
-                "1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj\n" +
-                "2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj\n" +
-                "3 0 obj<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 4 0 R >> >> /MediaBox [0 0 612 792] /Contents 5 0 R >>endobj\n" +
-                "4 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj\n" +
-                "5 0 obj<< /Length 200 >>stream\n" +
-                "BT /F1 12 Tf 50 700 Td (Relatorio de Arquitetura) Tj ET\n" +
-                "BT /F1 10 Tf 50 680 Td (Upload ID: " + uploadId + ") Tj ET\n" +
-                "BT /F1 10 Tf 50 660 Td (Data: " + java.time.LocalDate.now() + ") Tj ET\n" +
-                "BT /F1 10 Tf 50 640 Td (Status: Analisado) Tj ET\n" +
-                "BT /F1 10 Tf 50 600 Td (Componentes:) Tj ET\n" +
-                "BT /F1 10 Tf 50 580 Td (- API Gateway) Tj ET\n" +
-                "BT /F1 10 Tf 50 560 Td (- User Service) Tj ET\n" +
-                "BT /F1 10 Tf 50 540 Td (- Database) Tj ET\n" +
-                "BT /F1 10 Tf 50 500 Td (Riscos:) Tj ET\n" +
-                "BT /F1 10 Tf 50 480 Td (- HIGH: Single point of failure) Tj ET\n" +
-                "BT /F1 10 Tf 50 460 Td (- CRITICAL: No authentication) Tj ET\n" +
-                "BT /F1 10 Tf 50 420 Td (Recomendacoes:) Tj ET\n" +
-                "BT /F1 10 Tf 50 400 Td (- Implement circuit breaker) Tj ET\n" +
-                "BT /F1 10 Tf 50 380 Td (- Add distributed tracing) Tj ET\n" +
-                "endstream endobj\n" +
-                "xref\n" +
-                "0 6\n" +
-                "0000000000 65535 f \n" +
-                "0000000010 00000 n \n" +
-                "0000000079 00000 n \n" +
-                "0000000173 00000 n \n" +
-                "0000000301 00000 n \n" +
-                "0000000380 00000 n \n" +
-                "trailer<< /Size 6 /Root 1 0 R >>\n" +
-                "startxref\n" +
-                "496\n" +
-                "%%EOF";
     }
 }

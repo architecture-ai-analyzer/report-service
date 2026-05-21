@@ -15,12 +15,21 @@ import java.util.List;
 @Converter
 public class RecommendationDataListConverter implements AttributeConverter<List<RecommendationData>, String> {
 
-    private static final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-    static {
-        objectMapper = new ObjectMapper();
-        objectMapper.findAndRegisterModules();
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    public RecommendationDataListConverter() {
+        this(createDefaultObjectMapper());
+    }
+
+    RecommendationDataListConverter(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
+    private static ObjectMapper createDefaultObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.findAndRegisterModules();
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return mapper;
     }
 
     @Override

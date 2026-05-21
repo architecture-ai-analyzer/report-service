@@ -15,12 +15,21 @@ import java.util.List;
 @Converter
 public class ComponentDataListConverter implements AttributeConverter<List<ComponentData>, String> {
 
-    private static final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-    static {
-        objectMapper = new ObjectMapper();
-        objectMapper.findAndRegisterModules();
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    public ComponentDataListConverter() {
+        this(createDefaultObjectMapper());
+    }
+
+    ComponentDataListConverter(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
+    private static ObjectMapper createDefaultObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.findAndRegisterModules();
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return mapper;
     }
 
     @Override

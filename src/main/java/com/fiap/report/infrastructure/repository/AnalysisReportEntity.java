@@ -35,6 +35,9 @@ public class AnalysisReportEntity {
     @Column(name = "diagram_id", nullable = false, unique = true)
     private UUID diagramId;
 
+    @Column(name = "template_id")
+    private String templateId;
+
     @Column(name = "components", columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
     @Convert(converter = ComponentDataListConverter.class)
@@ -80,6 +83,7 @@ public class AnalysisReportEntity {
         return AnalysisReportEntity.builder()
                 .id(report.getId())
                 .diagramId(report.getDiagramId())
+                .templateId(report.getTemplateId())
                 .components(report.getComponents())
                 .risks(report.getRisks())
                 .recommendations(report.getRecommendations())
@@ -93,6 +97,7 @@ public class AnalysisReportEntity {
         return AnalysisReport.builder()
                 .id(id)
                 .diagramId(diagramId)
+                .templateId(templateId)
                 .components(components)
                 .risks(risks)
                 .recommendations(recommendations)
