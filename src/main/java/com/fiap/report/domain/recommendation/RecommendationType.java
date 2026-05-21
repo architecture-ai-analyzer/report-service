@@ -8,6 +8,7 @@ public enum RecommendationType {
     MAINTAINABILITY("Maintainability"),
     COST_OPTIMIZATION("Cost Optimization"),
     MONITORING("Monitoring"),
+    DATA("Data"),
     DOCUMENTATION("Documentation");
 
     private final String displayName;

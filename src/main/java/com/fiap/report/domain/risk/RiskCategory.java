@@ -7,6 +7,10 @@ public enum RiskCategory {
     RELIABILITY("Reliability"),
     MAINTAINABILITY("Maintainability"),
     COST("Cost"),
+    OPERATIONAL("Operational"),
+    DATA("Data"),
+    OTHER("Other"),
+    LOAD_BALANCER("Load Balancer"),
     COMPLIANCE("Compliance");
 
     private final String displayName;
