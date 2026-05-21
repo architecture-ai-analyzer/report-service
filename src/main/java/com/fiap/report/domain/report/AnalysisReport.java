@@ -32,7 +32,7 @@ public class AnalysisReport {
     private Double confidenceScore;
     private Long processingTimeMs;
 
-    public static AnalysisReport create(UUID diagramId, String userId, String templateId) {
+    public static AnalysisReport create(UUID diagramId, String userId) {
         return AnalysisReport.builder()
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)

@@ -66,15 +66,6 @@ public class AnalysisReportEntity {
     @Column(name = "status", nullable = false)
     private ReportStatus status;
 
-    @Column(name = "ai_model_version")
-    private String aiModelVersion;
-
-    @Column(name = "confidence_score")
-    private Double confidenceScore;
-
-    @Column(name = "processing_time_ms")
-    private Long processingTimeMs;
-
     @PrePersist
     public void prePersist() {
         if (id == null) {
@@ -103,9 +94,6 @@ public class AnalysisReportEntity {
                 .generatedAt(report.getGeneratedAt())
                 .generatedBy(report.getGeneratedBy())
                 .status(report.getStatus())
-                .aiModelVersion(report.getAiModelVersion())
-                .confidenceScore(report.getConfidenceScore())
-                .processingTimeMs(report.getProcessingTimeMs())
                 .build();
     }
 
@@ -121,9 +109,6 @@ public class AnalysisReportEntity {
                 .generatedAt(generatedAt)
                 .generatedBy(generatedBy)
                 .status(status)
-                .aiModelVersion(aiModelVersion)
-                .confidenceScore(confidenceScore)
-                .processingTimeMs(processingTimeMs)
                 .build();
     }
 }

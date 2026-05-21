@@ -1,24 +1,22 @@
 package com.fiap.report.infrastructure.gateway.impl;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.SendMessageRequest;
-import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.fiap.report.gateway.StatusGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 
 import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "aws.access.key")
 public class SQSStatusGatewayImpl implements StatusGateway {
 
-    private final AmazonSQSAsync amazonSQS;
+    private final SqsAsyncClient sqsAsyncClient;
 
     @Value("${aws.sqs.status-update-queue}")
     private String statusUpdateQueueUrl;
@@ -33,12 +31,13 @@ public class SQSStatusGatewayImpl implements StatusGateway {
                 diagramId, status, java.time.Instant.now()
             );
 
-            SendMessageRequest request = new SendMessageRequest()
-                    .withQueueUrl(statusUpdateQueueUrl)
-                    .withMessageBody(messageBody);
+            SendMessageRequest request = SendMessageRequest.builder()
+                    .queueUrl(statusUpdateQueueUrl)
+                    .messageBody(messageBody)
+                    .build();
 
-            SendMessageResult result = amazonSQS.sendMessage(request);
-            log.info("Status update sent to SQS: {}", result.getMessageId());
+            SendMessageResponse result = sqsAsyncClient.sendMessage(request).join();
+            log.info("Status update sent to SQS: {}", result.messageId());
 
         } catch (Exception e) {
             log.error("Error updating status for diagram: {}", diagramId, e);

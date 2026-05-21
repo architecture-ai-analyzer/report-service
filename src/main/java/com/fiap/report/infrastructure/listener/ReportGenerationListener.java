@@ -12,7 +12,6 @@ import io.awspring.cloud.sqs.annotation.SqsListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -22,7 +21,6 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "aws.access.key")
 public class ReportGenerationListener {
 
     private final CreateReportUseCase createReportUseCase;
@@ -61,8 +59,7 @@ public class ReportGenerationListener {
             
             String uploadId = (String) messageData.get("uploadId");
             Map<String, Object> analysis = (Map<String, Object>) messageData.get("analysis");
-            Map<String, Object> metadata = (Map<String, Object>) messageData.get("metadata");
-            
+
             // Converter para diagramId UUID
             UUID diagramId = convertToUUID(uploadId);
             
@@ -91,13 +88,9 @@ public class ReportGenerationListener {
             // Criar AIAnalysisResult
             AIAnalysisResult aiResult = AIAnalysisResult.builder()
                     .diagramId(diagramId)
-                    .userId((String) metadata.getOrDefault("userId", "system"))
                     .extractedComponents(components)
                     .identifiedRisks(risks)
                     .generatedRecommendations(recommendations)
-                    .modelVersion((String) metadata.getOrDefault("modelVersion", "unknown"))
-                    .confidenceScore(((Number) metadata.getOrDefault("confidenceScore", 0.0)).doubleValue())
-                    .processingTimeMs(((Number) metadata.getOrDefault("processingTimeMs", 0)).longValue())
                     .build();
             
             // Criar relatório
@@ -110,7 +103,7 @@ public class ReportGenerationListener {
             
         } catch (Exception e) {
             log.error("Error processing report generation message from queue {}", reportGenerationQueue, e);
-            
+
             // 3. Em caso de erro, atualizar status para ERRO
             try {
                 UUID diagramId = extractDiagramIdFromMessage(message);
@@ -119,8 +112,9 @@ public class ReportGenerationListener {
             } catch (Exception statusError) {
                 log.error("Failed to update status to ERRO", statusError);
             }
-            
-            throw new RuntimeException("Failed to process report generation", e);
+
+            // Não lança exceção para evitar que o SQS retente a mensagem indefinidamente
+            log.warn("Message processing failed, but will not be retried to prevent infinite loop");
         }
     }
     

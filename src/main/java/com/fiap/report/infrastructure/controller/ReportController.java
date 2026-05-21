@@ -20,7 +20,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -74,14 +77,16 @@ public class ReportController {
         }
     }
 
+    // Endpoint para listar relatórios (usado em /reports)
     @GetMapping
     public ResponseEntity<List<ReportSummaryResponse>> listReports(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
+        
         log.info("Listing reports - page: {}, size: {}", page, size);
-
-        var reportsPage = listReportsUseCase.execute("default-user",
+        
+        // TODO: Implementar paginação real
+        var reportsPage = listReportsUseCase.execute("default-user", 
                 PageRequest.of(page, size));
         List<ReportSummaryResponse> reports = reportsPage.getContent().stream()
                 .map(ReportSummaryResponse::from)
@@ -89,6 +94,7 @@ public class ReportController {
         return ResponseEntity.ok(reports);
     }
 
+    // Endpoint para obter relatório específico (usado em /reports/{uploadId})
     @GetMapping("/{uploadId}")
     public ResponseEntity<ReportResponse> getReport(@PathVariable String uploadId) {
         log.info("Getting report for upload: {}", uploadId);
@@ -97,13 +103,14 @@ public class ReportController {
             UUID diagramId = convertToUUID(uploadId);
             var report = getReportUseCase.execute(diagramId);
             return ResponseEntity.ok(ReportResponse.from(report));
-
+            
         } catch (Exception e) {
             log.error("Error getting report for upload: {} - Error: {}", uploadId, e.getMessage(), e);
             return ResponseEntity.notFound().build();
         }
     }
 
+    // Endpoint para status do processamento (usado em /status/{uploadId})
     @GetMapping("/{uploadId}/status")
     public ResponseEntity<ProcessingStatusResponse> getProcessingStatus(@PathVariable String uploadId) {
         log.info("Getting status for upload: {}", uploadId);
@@ -154,9 +161,6 @@ public class ReportController {
                 .extractedComponents(components)
                 .identifiedRisks(risks)
                 .generatedRecommendations(recommendations)
-                .modelVersion((String) metadata.getOrDefault("modelVersion", "unknown"))
-                .confidenceScore(((Number) metadata.getOrDefault("confidenceScore", 0.0)).doubleValue())
-                .processingTimeMs(((Number) metadata.getOrDefault("processingTimeMs", 0)).longValue())
                 .build();
     }
 
@@ -198,6 +202,7 @@ public class ReportController {
         }
     }
 
+    // Endpoint para download do relatório (usado no botão de download)
     @GetMapping("/{uploadId}/download")
     public ResponseEntity<byte[]> downloadReport(@PathVariable String uploadId) {
         log.info("Downloading report: {}", uploadId);

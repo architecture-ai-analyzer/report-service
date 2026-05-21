@@ -20,8 +20,5 @@ public class AIAnalysisResult {
     private List<ExtractedComponent> extractedComponents;
     private List<IdentifiedRisk> identifiedRisks;
     private List<GeneratedRecommendation> generatedRecommendations;
-    private String modelVersion;
-    private Double confidenceScore;
-    private Long processingTimeMs;
     private LocalDateTime processedAt;
 }

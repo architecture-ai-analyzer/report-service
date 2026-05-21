@@ -24,7 +24,7 @@ public class TestController {
     @GetMapping("/safe")
     public ResponseEntity<String> safeEndpoint(@RequestParam String id) {
         log.info("Endpoint seguro chamado com id: {}", id);
-
+        
         try {
             UUID uuid = UUID.fromString(id);
             return ResponseEntity.ok("Resposta segura para UUID: " + uuid.toString());
@@ -37,7 +37,7 @@ public class TestController {
     @PostMapping("/simulate-ai-response")
     public ResponseEntity<String> simulateAIResponse() {
         log.info("Simulando resposta da análise de IA...");
-
+        
         AIAnalysisResult aiResult = AIAnalysisResult.builder()
                 .diagramId(UUID.randomUUID())
                 .userId("test-user-123")
@@ -45,17 +45,14 @@ public class TestController {
                 .extractedComponents(createTestComponents())
                 .identifiedRisks(createTestRisks())
                 .generatedRecommendations(createTestRecommendations())
-                .modelVersion("gpt-4-vision-preview")
-                .confidenceScore(0.92)
-                .processingTimeMs(2500L)
                 .build();
 
         try {
             var report = createReportUseCase.execute(aiResult.getDiagramId(), aiResult);
-
+            
             log.info("Relatório de teste criado com sucesso: {}", report.getId());
             return ResponseEntity.ok("Relatório de teste criado com ID: " + report.getId());
-
+            
         } catch (Exception e) {
             log.error("Erro ao criar relatório de teste", e);
             return ResponseEntity.badRequest().body("Erro: " + e.getMessage());
