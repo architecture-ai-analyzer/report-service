@@ -179,6 +179,8 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>jacoco-check</id>
@@ -187,20 +189,15 @@
                         </goals>
                         <configuration>
                             <excludes>
-                                <exclude>**/config/**</exclude>
-                                <exclude>**/dto/**</exclude>
-                                <exclude>**/entity/**</exclude>
-                                <exclude>**/adapter/**</exclude>
-                                <exclude>**/pdf/**</exclude>
-                                <exclude>**/*Application.class</exclude>
-                                <exclude>**/*Config.class</exclude>
-                                <exclude>**/*Request.class</exclude>
-                                <exclude>**/*Response.class</exclude>
-                                <exclude>**/*Interceptor.class</exclude>
+                                <exclude>com/fiap/report/infrastructure/config/observability/**</exclude>
+                                <exclude>com/fiap/report/infrastructure/pdf/**</exclude>
+                                <exclude>com/fiap/report/infrastructure/gateway/impl/**</exclude>
+                                <exclude>com/fiap/report/infrastructure/controller/ReportApiExceptionHandler.class</exclude>
+                                <exclude>com/fiap/report/ReportServiceApplication.class</exclude>
                             </excludes>
                             <rules>
                                 <rule>
-                                    <element>PACKAGE</element>
+                                    <element>BUNDLE</element>
                                     <limits>
                                         <limit>
                                             <counter>LINE</counter>

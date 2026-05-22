@@ -4,12 +4,15 @@ import com.timgroup.statsd.StatsDClient;
 import io.opentracing.Tracer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.ComponentScan;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@SpringBootTest(classes = DatadogConfigTest.TestConfig.class)
 @TestPropertySource(properties = {
         "dd.trace.enabled=false",
         "datadog.statsd.host=localhost",
@@ -17,15 +20,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 })
 class DatadogConfigTest {
 
-    @Autowired
+    @Autowired(required = false)
     private Tracer tracer;
 
-    @Autowired
+    @Autowired(required = false)
     private StatsDClient statsDClient;
 
     @Test
     void contextLoads_datadogBeansAreRegistered() {
         assertThat(tracer).isNotNull();
         assertThat(statsDClient).isNotNull();
+    }
+
+    @Configuration
+    @Import(DatadogConfig.class)
+    static class TestConfig {
     }
 }

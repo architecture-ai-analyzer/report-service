@@ -69,8 +69,7 @@ class CreateReportUseCaseImplTest {
                         .build()))
                 .build();
 
-        AnalysisReport saved = AnalysisReport.create(diagramId, "user1");
-        when(repository.save(any())).thenReturn(saved);
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         // capture the report passed to repository.save to ensure status was set to ANALISADO
         AnalysisReport result = useCase.execute(diagramId, ai);
