@@ -1,6 +1,6 @@
 package com.fiap.report.infrastructure.config;
 
-import com.fiap.report.infrastructure.gateway.impl.SQSStatusGatewayImpl;
+import com.fiap.report.infrastructure.gateway.impl.ObservedStatusGateway;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,7 +10,7 @@ class GatewayConfigTest {
 
     @Test
     void statusGateway_returnsSameInstance() {
-        SQSStatusGatewayImpl mocked = mock(SQSStatusGatewayImpl.class);
+        ObservedStatusGateway mocked = mock(ObservedStatusGateway.class);
         GatewayConfig cfg = new GatewayConfig();
 
         var bean = cfg.statusGateway(mocked);

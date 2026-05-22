@@ -1,7 +1,9 @@
 package com.fiap.report.infrastructure.listener;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fiap.report.gateway.ReportMetricsGateway;
 import com.fiap.report.gateway.StatusGateway;
+import com.fiap.report.infrastructure.config.observability.TraceSupport;
 import com.fiap.report.infrastructure.mapper.AIAnalysisMapper;
 import com.fiap.report.usecase.CreateReportUseCase;
 import com.fiap.report.usecase.dto.AIAnalysisResult;
@@ -27,6 +29,7 @@ public class ReportGenerationListener {
     private final StatusGateway statusGateway;
     private final ObjectMapper objectMapper;
     private final AIAnalysisMapper aiAnalysisMapper;
+    private final ReportMetricsGateway reportMetricsGateway;
 
     @Value("${aws.sqs.report-generation-queue:report-generation-queue}")
     private String reportGenerationQueue;
@@ -52,6 +55,11 @@ public class ReportGenerationListener {
     @SqsListener("${aws.sqs.report-generation-queue:report-generation-queue}")
     public void handleReportGeneration(String message) {
         log.info("Received report generation message from queue {}: {}", reportGenerationQueue, message);
+        long pipelineStartMillis = System.currentTimeMillis();
+
+        TraceSupport.tagActiveSpan("operation.type", "sqsConsume");
+        TraceSupport.tagActiveSpan("messaging.system", "sqs");
+        TraceSupport.tagActiveSpan("messaging.destination", reportGenerationQueue);
 
         try {
             // Parse da mensagem da IA
@@ -62,7 +70,8 @@ public class ReportGenerationListener {
 
             // Converter para diagramId UUID
             UUID diagramId = convertToUUID(uploadId);
-            
+            TraceSupport.tagActiveSpan("diagram.id", diagramId.toString());
+
             // 1. Atualizar status para EM_PROCESSAMENTO
             statusGateway.updateStatus(diagramId, "EM_PROCESSAMENTO");
             log.info("Status updated to EM_PROCESSAMENTO for diagram: {}", diagramId);
@@ -100,8 +109,11 @@ public class ReportGenerationListener {
             // 2. Atualizar status para ANALISADO
             statusGateway.updateStatus(diagramId, "ANALISADO");
             log.info("Status updated to ANALISADO for diagram: {}", diagramId);
-            
+            recordPipelineDuration(pipelineStartMillis, "status:ANALISADO");
+
         } catch (Exception e) {
+            TraceSupport.addErrorToSpan(e, "SQS_REPORT_GENERATION_ERROR");
+            recordPipelineDuration(pipelineStartMillis, "status:ERRO");
             log.error("Error processing report generation message from queue {}", reportGenerationQueue, e);
 
             // 3. Em caso de erro, atualizar status para ERRO
@@ -118,6 +130,11 @@ public class ReportGenerationListener {
         }
     }
     
+    private void recordPipelineDuration(long pipelineStartMillis, String statusTag) {
+        long durationSeconds = (System.currentTimeMillis() - pipelineStartMillis) / 1000;
+        reportMetricsGateway.recordPipelineDuration(durationSeconds, statusTag);
+    }
+
     private UUID extractDiagramIdFromMessage(String message) {
         try {
             Map<String, Object> messageData = objectMapper.readValue(message, Map.class);

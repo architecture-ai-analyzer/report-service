@@ -43,7 +43,7 @@ variable "service" {
 variable "health_check_path" {
   description = "Path do health check"
   type        = string
-  default     = "/api/actuator/health"
+  default     = "/actuator/health"
 }
 
 variable "app_port" {

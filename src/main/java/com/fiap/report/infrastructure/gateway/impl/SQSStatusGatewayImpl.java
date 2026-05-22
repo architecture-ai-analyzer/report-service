@@ -1,6 +1,7 @@
 package com.fiap.report.infrastructure.gateway.impl;
 
 import com.fiap.report.gateway.StatusGateway;
+import com.fiap.report.infrastructure.config.observability.TraceSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +25,10 @@ public class SQSStatusGatewayImpl implements StatusGateway {
     @Override
     public void updateStatus(UUID diagramId, String status) {
         log.info("Updating status for diagram {}: {}", diagramId, status);
+
+        TraceSupport.tagActiveSpan("operation.type", "sqsPublish");
+        TraceSupport.tagActiveSpan("diagram.id", diagramId.toString());
+        TraceSupport.tagActiveSpan("status.transition", status);
 
         try {
             String messageBody = String.format(

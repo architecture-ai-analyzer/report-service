@@ -2,7 +2,9 @@ package com.fiap.report.infrastructure.controller;
 
 import com.fiap.report.domain.report.AnalysisReport;
 import com.fiap.report.domain.report.ReportStatus;
+import com.fiap.report.gateway.ReportMetricsGateway;
 import com.fiap.report.gateway.StatusGateway;
+import com.fiap.report.infrastructure.config.observability.TraceSupport;
 import com.fiap.report.infrastructure.mapper.AIAnalysisMapper;
 import com.fiap.report.usecase.CreateReportUseCase;
 import com.fiap.report.usecase.FindReportByDiagramIdUseCase;
@@ -41,6 +43,7 @@ public class ReportController {
     private final GenerateReportPdfUseCase generateReportPdfUseCase;
     private final ListReportsUseCase listReportsUseCase;
     private final StatusGateway statusGateway;
+    private final ReportMetricsGateway reportMetricsGateway;
     private final AIAnalysisMapper aiAnalysisMapper;
 
     // Endpoint de ingestão de análise da IA (harness local / simulação do payload que deveria chegar via fila)
@@ -50,9 +53,12 @@ public class ReportController {
             @RequestBody Map<String, Object> requestData) {
 
         log.info("Receiving AI analysis payload for upload: {}", uploadId);
+        long pipelineStartMillis = System.currentTimeMillis();
+        TraceSupport.tagActiveSpan("operation.type", "generateReport");
 
         try {
             UUID diagramId = convertToUUID(uploadId);
+            TraceSupport.tagActiveSpan("diagram.id", diagramId.toString());
 
             Optional<AnalysisReport> existingReport = findReportByDiagramIdUseCase.execute(diagramId);
             if (existingReport.isPresent()) {
@@ -67,9 +73,13 @@ public class ReportController {
 
             statusGateway.updateStatus(diagramId, "ANALISADO");
             log.info("Report generated successfully: {} for upload: {}", report.getId(), uploadId);
+            TraceSupport.tagActiveSpan("report.status", report.getStatus().name());
+            recordPipelineDuration(pipelineStartMillis, "status:ANALISADO");
             return ResponseEntity.ok(ReportResponse.from(report));
 
         } catch (Exception e) {
+            TraceSupport.addErrorToSpan(e, "REPORT_GENERATION_ERROR");
+            recordPipelineDuration(pipelineStartMillis, "status:ERRO");
             log.error("Error generating report for upload: {}", uploadId, e);
             try {
                 UUID diagramId = convertToUUID(uploadId);
@@ -87,6 +97,7 @@ public class ReportController {
             @RequestParam(defaultValue = "10") int size) {
 
         log.info("Listing reports - page: {}, size: {}", page, size);
+        TraceSupport.tagActiveSpan("operation.type", "listReports");
 
         var reportsPage = listReportsUseCase.execute("default-user",
                 PageRequest.of(page, size));
@@ -99,9 +110,11 @@ public class ReportController {
     @GetMapping("/{uploadId}")
     public ResponseEntity<ReportResponse> getReport(@PathVariable String uploadId) {
         log.info("Getting report for upload: {}", uploadId);
+        TraceSupport.tagActiveSpan("operation.type", "getReport");
 
         try {
             UUID diagramId = convertToUUID(uploadId);
+            TraceSupport.tagActiveSpan("diagram.id", diagramId.toString());
             var report = getReportUseCase.execute(diagramId);
             return ResponseEntity.ok(ReportResponse.from(report));
 
@@ -114,9 +127,11 @@ public class ReportController {
     @GetMapping("/{uploadId}/status")
     public ResponseEntity<ProcessingStatusResponse> getProcessingStatus(@PathVariable String uploadId) {
         log.info("Getting status for upload: {}", uploadId);
+        TraceSupport.tagActiveSpan("operation.type", "getProcessingStatus");
 
         try {
             UUID diagramId = convertToUUID(uploadId);
+            TraceSupport.tagActiveSpan("diagram.id", diagramId.toString());
             var reportOptional = findReportByDiagramIdUseCase.execute(diagramId);
             if (reportOptional.isEmpty()) {
                 return ResponseEntity.notFound().build();
@@ -191,6 +206,11 @@ public class ReportController {
         }
     }
 
+    private void recordPipelineDuration(long pipelineStartMillis, String statusTag) {
+        long durationSeconds = (System.currentTimeMillis() - pipelineStartMillis) / 1000;
+        reportMetricsGateway.recordPipelineDuration(durationSeconds, statusTag);
+    }
+
     private UUID convertToUUID(String uploadId) {
         try {
             return UUID.fromString(uploadId);
@@ -202,9 +222,11 @@ public class ReportController {
     @GetMapping("/{uploadId}/download")
     public ResponseEntity<byte[]> downloadReport(@PathVariable String uploadId) {
         log.info("Downloading report: {}", uploadId);
+        TraceSupport.tagActiveSpan("operation.type", "downloadReportPdf");
 
         try {
             UUID diagramId = convertToUUID(uploadId);
+            TraceSupport.tagActiveSpan("diagram.id", diagramId.toString());
             byte[] reportContent = generateReportPdfUseCase.execute(diagramId);
 
             String filename = "report-" + uploadId + ".pdf";

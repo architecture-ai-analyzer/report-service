@@ -3,6 +3,7 @@ package com.fiap.report.infrastructure.listener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fiap.report.domain.report.AnalysisReport;
 import com.fiap.report.domain.report.ReportStatus;
+import com.fiap.report.gateway.ReportMetricsGateway;
 import com.fiap.report.gateway.StatusGateway;
 import com.fiap.report.infrastructure.mapper.AIAnalysisMapper;
 import com.fiap.report.usecase.CreateReportUseCase;
@@ -45,13 +46,17 @@ class ReportGenerationListenerTest {
     @Mock
     private AIAnalysisMapper aiAnalysisMapper;
 
+    @Mock
+    private ReportMetricsGateway reportMetricsGateway;
+
     private ObjectMapper objectMapper;
     private ReportGenerationListener listener;
 
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        listener = new ReportGenerationListener(createReportUseCase, statusGateway, objectMapper, aiAnalysisMapper);
+        listener = new ReportGenerationListener(
+                createReportUseCase, statusGateway, objectMapper, aiAnalysisMapper, reportMetricsGateway);
     }
 
     @Test
