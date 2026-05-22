@@ -1,6 +1,6 @@
 # Configure the environment as 'production'
 locals {
-  environment = "production"
+  environment = "dev"
 }
 
 # Get current AWS account ID for SQS queue URLs

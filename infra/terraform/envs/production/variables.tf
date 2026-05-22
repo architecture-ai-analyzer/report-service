@@ -61,5 +61,5 @@ variable "app_name" {
 variable "environment" {
   description = "Ambiente (dev, homologation, production)"
   type        = string
-  default     = "production"
+  default     = "dev"
 }

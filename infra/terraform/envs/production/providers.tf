@@ -18,7 +18,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Environment = "production"
+      Environment = "dev"
       ManagedBy   = "Terraform"
       Repository  = "report-service"
       Project     = "report-service"
