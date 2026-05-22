@@ -15,7 +15,6 @@ import java.util.List;
 @AllArgsConstructor
 public class ReportResponse {
     private String generatedAt;
-    private String templateId;
     private SummaryResponse summary;
     private List<ComponentResponse> detectedComponents;
     private SecurityAnalysisResponse securityAnalysis;
@@ -46,7 +45,6 @@ public class ReportResponse {
 
         return ReportResponse.builder()
                 .generatedAt(report.getGeneratedAt() != null ? report.getGeneratedAt().toString() : "2026-03-29T06:04:20.698397Z")
-                .templateId(report.getTemplateId())
                 .summary(summary)
                 .detectedComponents(components)
                 .securityAnalysis(securityAnalysis)

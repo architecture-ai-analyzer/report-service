@@ -317,7 +317,13 @@ class ReportControllerTest {
     void downloadReport_returnsPdf() {
         String uploadId = "upload-123";
 
-        ResponseEntity<byte[]> response = controller.downloadReport(uploadId);
+        AnalysisReport report = AnalysisReport.builder()
+                .id(UUID.randomUUID())
+                .build();
+
+        when(getReportUseCase.execute(any())).thenReturn(report);
+
+        ResponseEntity<byte[]> response = controller.downloadReport(uploadId, "template-tecnico");
 
         assertThat(response.getStatusCode().is2xxSuccessful());
         assertThat(response.getBody()).isNotNull();

@@ -21,7 +21,6 @@ public class AnalysisReport {
     private UUID id;
     private UUID diagramId;
     private String userId;
-    private String templateId;
     private List<ComponentData> components;
     private List<RiskData> risks;
     private List<RecommendationData> recommendations;
@@ -37,7 +36,6 @@ public class AnalysisReport {
                 .id(UUID.randomUUID())
                 .diagramId(diagramId)
                 .userId(userId)
-                .templateId(templateId)
                 .generatedAt(LocalDateTime.now())
                 .generatedBy("AI_SERVICE")
                 .status(ReportStatus.RECEBIDO)

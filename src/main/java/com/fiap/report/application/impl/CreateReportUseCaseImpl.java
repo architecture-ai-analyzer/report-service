@@ -35,17 +35,14 @@ public class CreateReportUseCaseImpl implements CreateReportUseCase {
         log.info("Creating report for diagram: {}", diagramId);
 
         try {
-            // Converter componentes
             List<ComponentData> components = aiResult.getExtractedComponents().stream()
                     .map(this::convertToComponentData)
                     .toList();
 
-            // Converter riscos
             List<RiskData> risks = aiResult.getIdentifiedRisks().stream()
                     .map(this::convertToRiskData)
                     .toList();
 
-            // Converter recomendações
             List<RecommendationData> recommendations = aiResult.getGeneratedRecommendations().stream()
                     .map(this::convertToRecommendationData)
                     .toList();
@@ -53,7 +50,6 @@ public class CreateReportUseCaseImpl implements CreateReportUseCase {
             AnalysisReport report = AnalysisReport.builder()
                     .diagramId(diagramId)
                     .userId(aiResult.getUserId())
-                    .templateId(aiResult.getTemplateId())
                     .components(components)
                     .risks(risks)
                     .recommendations(recommendations)

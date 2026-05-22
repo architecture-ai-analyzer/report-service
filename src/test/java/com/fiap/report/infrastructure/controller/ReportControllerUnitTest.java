@@ -123,7 +123,13 @@ class ReportControllerUnitTest {
     void downloadReport_returnsPdfBytes() {
         String uploadId = "download-me";
 
-        var resp = controller.downloadReport(uploadId);
+        AnalysisReport report = AnalysisReport.builder()
+            .id(UUID.randomUUID())
+            .build();
+
+        when(getReportUseCase.execute(any())).thenReturn(report);
+
+        var resp = controller.downloadReport(uploadId, "template-tecnico");
 
         assertThat(resp.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(resp.getHeaders().getFirst("Content-Type")).isEqualTo("application/pdf");
