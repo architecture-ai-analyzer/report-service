@@ -2,6 +2,7 @@ package com.fiap.report.application.impl;
 
 import com.fiap.report.domain.report.AnalysisReport;
 import com.fiap.report.gateway.AnalysisReportGateway;
+import com.fiap.report.gateway.ReportMetricsGateway;
 import com.fiap.report.usecase.dto.AIAnalysisResult;
 import com.fiap.report.usecase.dto.ExtractedComponent;
 import com.fiap.report.usecase.dto.GeneratedRecommendation;
@@ -16,17 +17,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class CreateReportUseCaseImplTest {
 
     private AnalysisReportGateway repository;
+    private ReportMetricsGateway reportMetricsGateway;
     private CreateReportUseCaseImpl useCase;
 
     @BeforeEach
     void setUp() {
         repository = mock(AnalysisReportGateway.class);
-        useCase = new CreateReportUseCaseImpl(repository);
+        reportMetricsGateway = mock(ReportMetricsGateway.class);
+        useCase = new CreateReportUseCaseImpl(repository, reportMetricsGateway);
     }
 
     @Test
@@ -65,8 +69,7 @@ class CreateReportUseCaseImplTest {
                         .build()))
                 .build();
 
-        AnalysisReport saved = AnalysisReport.create(diagramId, "user1");
-        when(repository.save(any())).thenReturn(saved);
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         // capture the report passed to repository.save to ensure status was set to ANALISADO
         AnalysisReport result = useCase.execute(diagramId, ai);
@@ -79,6 +82,7 @@ class CreateReportUseCaseImplTest {
         org.mockito.Mockito.verify(repository).save(captor.capture());
         AnalysisReport passed = captor.getValue();
         assertThat(passed.getStatus()).isEqualTo(com.fiap.report.domain.report.ReportStatus.ANALISADO);
+        verify(reportMetricsGateway).recordReportCreated("status:ANALISADO");
     }
 
     @Test

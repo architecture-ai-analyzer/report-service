@@ -55,7 +55,10 @@ class SQSStatusGatewayImplTest {
                 .thenReturn(CompletableFuture.failedFuture(new RuntimeException("SQS error")));
 
         assertThatThrownBy(() -> gateway.updateStatus(diagramId, "ANALISADO"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Failed to update status")
+                .cause()
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Failed to update status");
+                .hasMessageContaining("SQS error");
     }
 }

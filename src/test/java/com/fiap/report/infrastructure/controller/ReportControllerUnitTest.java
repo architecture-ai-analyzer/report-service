@@ -9,6 +9,7 @@ import com.fiap.report.usecase.FindReportByDiagramIdUseCase;
 import com.fiap.report.usecase.GenerateReportPdfUseCase;
 import com.fiap.report.usecase.GetReportUseCase;
 import com.fiap.report.usecase.ListReportsUseCase;
+import com.fiap.report.gateway.ReportMetricsGateway;
 import com.fiap.report.gateway.StatusGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,7 @@ class ReportControllerUnitTest {
     private GenerateReportPdfUseCase generateReportPdfUseCase;
     private ListReportsUseCase listReportsUseCase;
     private StatusGateway statusGateway;
+    private ReportMetricsGateway reportMetricsGateway;
     private AIAnalysisMapper aiAnalysisMapper;
 
     private ReportController controller;
@@ -43,10 +45,12 @@ class ReportControllerUnitTest {
         generateReportPdfUseCase = mock(GenerateReportPdfUseCase.class);
         listReportsUseCase = mock(ListReportsUseCase.class);
         statusGateway = mock(StatusGateway.class);
+        reportMetricsGateway = mock(ReportMetricsGateway.class);
         aiAnalysisMapper = mock(AIAnalysisMapper.class);
 
         controller = new ReportController(createReportUseCase, findReportByDiagramIdUseCase,
-                getReportUseCase, generateReportPdfUseCase, listReportsUseCase, statusGateway, aiAnalysisMapper);
+                getReportUseCase, generateReportPdfUseCase, listReportsUseCase, statusGateway,
+                reportMetricsGateway, aiAnalysisMapper);
     }
 
     @Test

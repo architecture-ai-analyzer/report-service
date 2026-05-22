@@ -2,6 +2,7 @@ package com.fiap.report.application.impl;
 
 import com.fiap.report.domain.report.AnalysisReport;
 import com.fiap.report.gateway.AnalysisReportGateway;
+import com.fiap.report.gateway.ReportMetricsGateway;
 import com.fiap.report.infrastructure.pdf.PdfReportGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,19 +14,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class GenerateReportPdfUseCaseImplTest {
 
     private AnalysisReportGateway reportGateway;
     private PdfReportGenerator pdfReportGenerator;
+    private ReportMetricsGateway reportMetricsGateway;
     private GenerateReportPdfUseCaseImpl useCase;
 
     @BeforeEach
     void setUp() {
         reportGateway = mock(AnalysisReportGateway.class);
         pdfReportGenerator = mock(PdfReportGenerator.class);
-        useCase = new GenerateReportPdfUseCaseImpl(reportGateway, pdfReportGenerator);
+        reportMetricsGateway = mock(ReportMetricsGateway.class);
+        useCase = new GenerateReportPdfUseCaseImpl(reportGateway, pdfReportGenerator, reportMetricsGateway);
     }
 
     @Test
@@ -46,6 +50,7 @@ class GenerateReportPdfUseCaseImplTest {
 
         assertThat(result).isNotNull();
         assertThat(result).isEqualTo(pdfBytes);
+        verify(reportMetricsGateway).recordPdfGenerated("status:success");
     }
 
     @Test

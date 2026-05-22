@@ -17,8 +17,6 @@ public class PerformanceAnalysisResponse {
     private CapacityResponse capacity;
     
     public static PerformanceAnalysisResponse from(List<ComponentResponse> components) {
-        List<ComponentResponse> safeComponents = components != null ? components : List.of();
-        
         List<MetricResponse> metrics = List.of(
             MetricResponse.builder()
                 .metric("Tempo de Resposta")

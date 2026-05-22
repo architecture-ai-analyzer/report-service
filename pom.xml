@@ -56,6 +56,32 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- Datadog observability -->
+        <dependency>
+            <groupId>com.datadoghq</groupId>
+            <artifactId>java-dogstatsd-client</artifactId>
+            <version>4.4.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.datadoghq</groupId>
+            <artifactId>dd-trace-api</artifactId>
+            <version>1.36.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.opentracing</groupId>
+            <artifactId>opentracing-api</artifactId>
+            <version>0.33.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.opentracing</groupId>
+            <artifactId>opentracing-util</artifactId>
+            <version>0.33.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
         <!-- AWS SQS -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
@@ -153,6 +179,8 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>jacoco-check</id>
@@ -161,20 +189,15 @@
                         </goals>
                         <configuration>
                             <excludes>
-                                <exclude>**/config/**</exclude>
-                                <exclude>**/dto/**</exclude>
-                                <exclude>**/entity/**</exclude>
-                                <exclude>**/adapter/**</exclude>
-                                <exclude>**/pdf/**</exclude>
-                                <exclude>**/*Application.class</exclude>
-                                <exclude>**/*Config.class</exclude>
-                                <exclude>**/*Request.class</exclude>
-                                <exclude>**/*Response.class</exclude>
-                                <exclude>**/*Interceptor.class</exclude>
+                                <exclude>com/fiap/report/infrastructure/config/observability/**</exclude>
+                                <exclude>com/fiap/report/infrastructure/pdf/**</exclude>
+                                <exclude>com/fiap/report/infrastructure/gateway/impl/**</exclude>
+                                <exclude>com/fiap/report/infrastructure/controller/ReportApiExceptionHandler.class</exclude>
+                                <exclude>com/fiap/report/ReportServiceApplication.class</exclude>
                             </excludes>
                             <rules>
                                 <rule>
-                                    <element>PACKAGE</element>
+                                    <element>BUNDLE</element>
                                     <limits>
                                         <limit>
                                             <counter>LINE</counter>

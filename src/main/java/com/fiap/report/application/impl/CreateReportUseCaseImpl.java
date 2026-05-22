@@ -16,6 +16,7 @@ import com.fiap.report.usecase.dto.ExtractedComponent;
 import com.fiap.report.usecase.dto.IdentifiedRisk;
 import com.fiap.report.usecase.dto.GeneratedRecommendation;
 import com.fiap.report.gateway.AnalysisReportGateway;
+import com.fiap.report.gateway.ReportMetricsGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ import java.util.UUID;
 public class CreateReportUseCaseImpl implements CreateReportUseCase {
 
     private final AnalysisReportGateway repository;
+    private final ReportMetricsGateway reportMetricsGateway;
 
     @Override
     public AnalysisReport execute(UUID diagramId, AIAnalysisResult aiResult) {
@@ -59,7 +61,9 @@ public class CreateReportUseCaseImpl implements CreateReportUseCase {
                     .status(ReportStatus.ANALISADO)
                     .build();
 
-            return repository.save(report);
+            AnalysisReport saved = repository.save(report);
+            reportMetricsGateway.recordReportCreated("status:" + saved.getStatus().name());
+            return saved;
 
         } catch (Exception e) {
             log.error("Error creating report for diagram: {}", diagramId, e);

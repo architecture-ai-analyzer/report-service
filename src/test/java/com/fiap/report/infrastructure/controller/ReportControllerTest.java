@@ -11,6 +11,7 @@ import com.fiap.report.domain.risk.RiskData;
 import com.fiap.report.domain.risk.RiskLevel;
 import com.fiap.report.domain.report.AnalysisReport;
 import com.fiap.report.domain.report.ReportStatus;
+import com.fiap.report.gateway.ReportMetricsGateway;
 import com.fiap.report.gateway.StatusGateway;
 import com.fiap.report.infrastructure.mapper.AIAnalysisMapper;
 import com.fiap.report.infrastructure.dto.ProcessingStatusResponse;
@@ -66,6 +67,9 @@ class ReportControllerTest {
     private StatusGateway statusGateway;
 
     @Mock
+    private ReportMetricsGateway reportMetricsGateway;
+
+    @Mock
     private AIAnalysisMapper aiAnalysisMapper;
 
     private ReportController controller;
@@ -73,7 +77,8 @@ class ReportControllerTest {
     @BeforeEach
     void setUp() {
         controller = new ReportController(createReportUseCase, findReportByDiagramIdUseCase,
-                getReportUseCase, generateReportPdfUseCase, listReportsUseCase, statusGateway, aiAnalysisMapper);
+                getReportUseCase, generateReportPdfUseCase, listReportsUseCase, statusGateway,
+                reportMetricsGateway, aiAnalysisMapper);
     }
 
     @Test

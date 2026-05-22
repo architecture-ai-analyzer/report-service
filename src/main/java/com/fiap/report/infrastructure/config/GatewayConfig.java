@@ -1,8 +1,7 @@
 package com.fiap.report.infrastructure.config;
 
 import com.fiap.report.gateway.StatusGateway;
-import com.fiap.report.infrastructure.gateway.impl.SQSStatusGatewayImpl;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import com.fiap.report.infrastructure.gateway.impl.ObservedStatusGateway;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -10,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 public class GatewayConfig {
 
     @Bean
-    public StatusGateway statusGateway(SQSStatusGatewayImpl sqsStatusGateway) {
-        return sqsStatusGateway;
+    public StatusGateway statusGateway(ObservedStatusGateway observedStatusGateway) {
+        return observedStatusGateway;
     }
 }

@@ -21,11 +21,13 @@ import java.util.List;
 @Component
 public class PdfReportGenerator {
 
+    private static final String CRITICAL = "CRITICAL";
+    private static final String HIGH = "HIGH";
+
     public byte[] generateReportPdf(AnalysisReport report) {
         Document document = new Document(PageSize.A4, 36, 36, 36, 36);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        try {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             PdfWriter.getInstance(document, baos);
             document.open();
 
@@ -57,15 +59,7 @@ public class PdfReportGenerator {
             return baos.toByteArray();
         } catch (Exception e) {
             log.error("Error generating PDF for report {}", report.getDiagramId(), e);
-            throw new RuntimeException("Failed to generate PDF", e);
-        } finally {
-            if (document.isOpen()) {
-                document.close();
-            }
-            try {
-                baos.close();
-            } catch (IOException ignored) {
-            }
+            throw new IllegalStateException("Failed to generate PDF", e);
         }
     }
 
@@ -89,10 +83,10 @@ public class PdfReportGenerator {
         addLine(document, "Total de Componentes Mapeados: " + (report.getComponents() != null ? report.getComponents().size() : 0), bodyFont);
 
         long criticalRisks = report.getRisks() != null ? report.getRisks().stream()
-                .filter(r -> "CRITICAL".equalsIgnoreCase(r.getLevel().name()))
+                .filter(r -> CRITICAL.equalsIgnoreCase(r.getLevel().name()))
                 .count() : 0;
         long highRisks = report.getRisks() != null ? report.getRisks().stream()
-                .filter(r -> "HIGH".equalsIgnoreCase(r.getLevel().name()))
+                .filter(r -> HIGH.equalsIgnoreCase(r.getLevel().name()))
                 .count() : 0;
 
         addLine(document, "Nível de Risco Geral: " + (criticalRisks > 0 ? "CRÍTICO (Requer Atenção Imediata)" : "CONTROLADO"), bodyFont);
@@ -102,7 +96,7 @@ public class PdfReportGenerator {
         addSectionTitle(document, "Principais Impactos no Negócio", headerFont);
         if (report.getRisks() != null && !report.getRisks().isEmpty() && (criticalRisks > 0 || highRisks > 0)) {
             report.getRisks().stream()
-                    .filter(r -> "CRITICAL".equalsIgnoreCase(r.getLevel().name()) || "HIGH".equalsIgnoreCase(r.getLevel().name()))
+                    .filter(r -> CRITICAL.equalsIgnoreCase(r.getLevel().name()) || HIGH.equalsIgnoreCase(r.getLevel().name()))
                     .limit(3)
                     .forEach(risk -> addLine(document, "- " + risk.getImpact(), bodyFont));
         } else {
@@ -117,14 +111,14 @@ public class PdfReportGenerator {
         addLine(document, "Template Aplicado: Regras de Segurança Estrita", bodyFont);
 
         boolean hasCritical = report.getRisks() != null && report.getRisks().stream()
-                .anyMatch(r -> "CRITICAL".equalsIgnoreCase(r.getLevel().name()));
+                .anyMatch(r -> CRITICAL.equalsIgnoreCase(r.getLevel().name()));
         addLine(document, "Avaliação de Vulnerabilidade: " + (hasCritical ? "CRÍTICO" : "ALTO"), bodyFont);
         addLine(document, "", bodyFont);
 
         addSectionTitle(document, "Vulnerabilidades Detectadas", headerFont);
         if (report.getRisks() != null && !report.getRisks().isEmpty()) {
             report.getRisks().stream()
-                    .filter(r -> "CRITICAL".equalsIgnoreCase(r.getLevel().name()) || "HIGH".equalsIgnoreCase(r.getLevel().name()))
+                    .filter(r -> CRITICAL.equalsIgnoreCase(r.getLevel().name()) || HIGH.equalsIgnoreCase(r.getLevel().name()))
                     .forEach(risk -> addLine(document, "- [" + risk.getLevel().name() + "] " + risk.getDescription(), bodyFont));
         } else {
             addLine(document, "- Nenhum risco crítico ou alto detectado.", bodyFont);
@@ -193,7 +187,7 @@ public class PdfReportGenerator {
         try {
             document.add(createParagraph(title, font, Element.ALIGN_LEFT));
         } catch (Exception e) {
-            throw new RuntimeException("Failed to add section title to PDF", e);
+            throw new IllegalStateException("Failed to add section title to PDF", e);
         }
     }
 
@@ -204,7 +198,7 @@ public class PdfReportGenerator {
             line.setSpacingAfter(4);
             document.add(line);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to add line to PDF", e);
+            throw new IllegalStateException("Failed to add line to PDF", e);
         }
     }
 
@@ -213,7 +207,7 @@ public class PdfReportGenerator {
             BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.EMBEDDED);
             return new Font(baseFont, size, style);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create PDF font", e);
+            throw new IllegalStateException("Failed to create PDF font", e);
         }
     }
 

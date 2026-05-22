@@ -56,3 +56,27 @@ variable "aws_status_update_queue_url" {
   description = "SQS URL used by the application"
   type        = string
 }
+
+variable "datadog_enabled" {
+  description = "Enable Datadog tracing"
+  type        = bool
+  default     = true
+}
+
+variable "datadog_service" {
+  description = "Datadog service name"
+  type        = string
+  default     = "report-service"
+}
+
+variable "datadog_version" {
+  description = "Application version for Datadog"
+  type        = string
+  default     = "0.0.1-SNAPSHOT"
+}
+
+variable "datadog_agent_host" {
+  description = "Datadog Agent hostname in the cluster"
+  type        = string
+  default     = "datadog-agent.datadog-agent.svc.cluster.local"
+}

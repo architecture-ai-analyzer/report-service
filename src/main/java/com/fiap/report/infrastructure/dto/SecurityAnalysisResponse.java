@@ -12,6 +12,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SecurityAnalysisResponse {
+
+    private static final String MEDIO = "Médio";
+
     private String overallRisk;
     private int risksFound;
     private List<SecurityRiskResponse> risks;
@@ -28,8 +31,7 @@ public class SecurityAnalysisResponse {
                 .filter(risk -> "HIGH".equals(risk.getLevel()))
                 .count();
         
-        String overallRisk = criticalRisks > 0 ? "Crítico" : 
-                            highRisks > 0 ? "Alto" : "Médio";
+        String overallRisk = calculateOverallRisk(criticalRisks, highRisks);
         
         List<SecurityRiskResponse> securityRisks = safeRisks.stream()
                 .map(SecurityRiskResponse::from)
@@ -48,6 +50,16 @@ public class SecurityAnalysisResponse {
                 .compliance(compliance)
                 .build();
     }
+
+    private static String calculateOverallRisk(int criticalRisks, int highRisks) {
+        if (criticalRisks > 0) {
+            return "Crítico";
+        } else if (highRisks > 0) {
+            return "Alto";
+        } else {
+            return MEDIO;
+        }
+    }
 }
 
 @Data
@@ -55,6 +67,9 @@ public class SecurityAnalysisResponse {
 @NoArgsConstructor
 @AllArgsConstructor
 class SecurityRiskResponse {
+
+    private static final String MEDIO = "Médio";
+
     private String title;
     private String description;
     private String level;
@@ -64,9 +79,9 @@ class SecurityRiskResponse {
         String level = switch(risk.getLevel()) {
             case "CRITICAL" -> "Crítico";
             case "HIGH" -> "Alto";
-            case "MEDIUM" -> "Médio";
+            case "MEDIUM" -> MEDIO;
             case "LOW" -> "Baixo";
-            default -> "Médio";
+            default -> MEDIO;
         };
         
         return SecurityRiskResponse.builder()
