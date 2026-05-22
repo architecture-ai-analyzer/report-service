@@ -9,8 +9,10 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
+import software.amazon.awssdk.services.sqs.model.SqsException;
 
 import java.util.UUID;
+import java.util.concurrent.CompletionException;
 
 @Slf4j
 @Service
@@ -44,9 +46,12 @@ public class SQSStatusGatewayImpl implements StatusGateway {
             SendMessageResponse result = sqsAsyncClient.sendMessage(request).join();
             log.info("Status update sent to SQS: {}", result.messageId());
 
+        } catch (CompletionException e) {
+            log.error("Error updating status for diagram: {}", diagramId, e.getCause());
+            throw new IllegalStateException("Failed to update status", e.getCause());
         } catch (Exception e) {
             log.error("Error updating status for diagram: {}", diagramId, e);
-            throw new RuntimeException("Failed to update status", e);
+            throw new IllegalStateException("Failed to update status", e);
         }
     }
 }

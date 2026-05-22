@@ -35,8 +35,7 @@ public class ArchitectureAnalysisResponse {
                 .build()
         );
         
-        String complexity = components.size() > 5 ? "Alta" : 
-                           components.size() > 3 ? "Média" : "Baixa";
+        String complexity = calculateComplexity(components);
         
         return ArchitectureAnalysisResponse.builder()
                 .patterns(patterns)
@@ -44,6 +43,16 @@ public class ArchitectureAnalysisResponse {
                 .maintainability("Média")
                 .scalability("Alta")
                 .build();
+    }
+
+    private static String calculateComplexity(List<ComponentResponse> components) {
+        if (components.size() > 5) {
+            return "Alta";
+        } else if (components.size() > 3) {
+            return "Média";
+        } else {
+            return "Baixa";
+        }
     }
 }
 

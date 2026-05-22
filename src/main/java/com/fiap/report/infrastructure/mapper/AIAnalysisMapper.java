@@ -17,6 +17,8 @@ import java.util.Map;
 @Component
 public class AIAnalysisMapper {
 
+    private static final String DESCRIPTION = "description";
+
     @SuppressWarnings("unchecked")
     public ExtractedComponent mapToComponent(Map<String, Object> componentData) {
         Map<String, Object> properties = (Map<String, Object>) componentData.get("properties");
@@ -29,7 +31,7 @@ public class AIAnalysisMapper {
                 .connections(connections)
                 .properties(properties)
                 .technology((String) componentData.get("technology"))
-                .description((String) componentData.get("description"))
+                .description((String) componentData.get(DESCRIPTION))
                 .build();
     }
 
@@ -39,7 +41,7 @@ public class AIAnalysisMapper {
 
         return IdentifiedRisk.builder()
                 .id((String) riskData.get("id"))
-                .description((String) riskData.get("description"))
+                .description((String) riskData.get(DESCRIPTION))
                 .level((String) riskData.get("level"))
                 .affectedComponent((String) riskData.get("affectedComponent"))
                 .category((String) riskData.get("category"))
@@ -55,7 +57,7 @@ public class AIAnalysisMapper {
 
         return GeneratedRecommendation.builder()
                 .id((String) recommendationData.get("id"))
-                .description((String) recommendationData.get("description"))
+                .description((String) recommendationData.get(DESCRIPTION))
                 .targetComponent((String) recommendationData.get("targetComponent"))
                 .type((String) recommendationData.get("type"))
                 .priority((String) recommendationData.get("priority"))

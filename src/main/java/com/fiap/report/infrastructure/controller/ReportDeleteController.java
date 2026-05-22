@@ -4,8 +4,10 @@ import com.fiap.report.gateway.AnalysisReportGateway;
 import com.fiap.report.infrastructure.config.observability.TraceSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
@@ -24,7 +26,7 @@ public class ReportDeleteController {
         TraceSupport.tagActiveSpan("report.id", id.toString());
 
         if (!reportGateway.existsById(id)) {
-            throw new RuntimeException("Report not found: " + id);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Report not found: " + id);
         }
 
         reportGateway.deleteById(id);

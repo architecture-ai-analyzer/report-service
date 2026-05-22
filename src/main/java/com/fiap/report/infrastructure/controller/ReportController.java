@@ -37,6 +37,9 @@ import java.util.*;
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"})
 public class ReportController {
 
+    private static final String OPERATION_TYPE = "operation.type";
+    private static final String DIAGRAM_ID = "diagram.id";
+
     private final CreateReportUseCase createReportUseCase;
     private final FindReportByDiagramIdUseCase findReportByDiagramIdUseCase;
     private final GetReportUseCase getReportUseCase;
@@ -54,11 +57,11 @@ public class ReportController {
 
         log.info("Receiving AI analysis payload for upload: {}", uploadId);
         long pipelineStartMillis = System.currentTimeMillis();
-        TraceSupport.tagActiveSpan("operation.type", "generateReport");
+        TraceSupport.tagActiveSpan(OPERATION_TYPE, "generateReport");
 
         try {
             UUID diagramId = convertToUUID(uploadId);
-            TraceSupport.tagActiveSpan("diagram.id", diagramId.toString());
+            TraceSupport.tagActiveSpan(DIAGRAM_ID, diagramId.toString());
 
             Optional<AnalysisReport> existingReport = findReportByDiagramIdUseCase.execute(diagramId);
             if (existingReport.isPresent()) {
@@ -97,7 +100,7 @@ public class ReportController {
             @RequestParam(defaultValue = "10") int size) {
 
         log.info("Listing reports - page: {}, size: {}", page, size);
-        TraceSupport.tagActiveSpan("operation.type", "listReports");
+        TraceSupport.tagActiveSpan(OPERATION_TYPE, "listReports");
 
         var reportsPage = listReportsUseCase.execute("default-user",
                 PageRequest.of(page, size));
@@ -110,11 +113,11 @@ public class ReportController {
     @GetMapping("/{uploadId}")
     public ResponseEntity<ReportResponse> getReport(@PathVariable String uploadId) {
         log.info("Getting report for upload: {}", uploadId);
-        TraceSupport.tagActiveSpan("operation.type", "getReport");
+        TraceSupport.tagActiveSpan(OPERATION_TYPE, "getReport");
 
         try {
             UUID diagramId = convertToUUID(uploadId);
-            TraceSupport.tagActiveSpan("diagram.id", diagramId.toString());
+            TraceSupport.tagActiveSpan(DIAGRAM_ID, diagramId.toString());
             var report = getReportUseCase.execute(diagramId);
             return ResponseEntity.ok(ReportResponse.from(report));
 
@@ -127,11 +130,11 @@ public class ReportController {
     @GetMapping("/{uploadId}/status")
     public ResponseEntity<ProcessingStatusResponse> getProcessingStatus(@PathVariable String uploadId) {
         log.info("Getting status for upload: {}", uploadId);
-        TraceSupport.tagActiveSpan("operation.type", "getProcessingStatus");
+        TraceSupport.tagActiveSpan(OPERATION_TYPE, "getProcessingStatus");
 
         try {
             UUID diagramId = convertToUUID(uploadId);
-            TraceSupport.tagActiveSpan("diagram.id", diagramId.toString());
+            TraceSupport.tagActiveSpan(DIAGRAM_ID, diagramId.toString());
             var reportOptional = findReportByDiagramIdUseCase.execute(diagramId);
             if (reportOptional.isEmpty()) {
                 return ResponseEntity.notFound().build();
@@ -222,11 +225,11 @@ public class ReportController {
     @GetMapping("/{uploadId}/download")
     public ResponseEntity<byte[]> downloadReport(@PathVariable String uploadId) {
         log.info("Downloading report: {}", uploadId);
-        TraceSupport.tagActiveSpan("operation.type", "downloadReportPdf");
+        TraceSupport.tagActiveSpan(OPERATION_TYPE, "downloadReportPdf");
 
         try {
             UUID diagramId = convertToUUID(uploadId);
-            TraceSupport.tagActiveSpan("diagram.id", diagramId.toString());
+            TraceSupport.tagActiveSpan(DIAGRAM_ID, diagramId.toString());
             byte[] reportContent = generateReportPdfUseCase.execute(diagramId);
 
             String filename = "report-" + uploadId + ".pdf";

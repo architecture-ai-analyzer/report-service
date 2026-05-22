@@ -19,6 +19,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TestController {
 
+    private static final String API_GATEWAY = "API Gateway";
+
     private final CreateReportUseCase createReportUseCase;
 
     @GetMapping("/safe")
@@ -61,7 +63,7 @@ public class TestController {
     private List<ExtractedComponent> createTestComponents() {
         return List.of(
                 ExtractedComponent.builder()
-                        .name("API Gateway")
+                        .name(API_GATEWAY)
                         .type("API_GATEWAY")
                         .connections(List.of("user-service", "order-service"))
                         .properties(java.util.Map.of("protocol", "REST", "rateLimit", "1000 req/s"))
@@ -95,7 +97,7 @@ public class TestController {
                         .id("risk-2")
                         .description("Sem autenticação no API Gateway")
                         .level("CRITICAL")
-                        .affectedComponent("API Gateway")
+                        .affectedComponent(API_GATEWAY)
                         .category("SECURITY")
                         .mitigation(List.of("Implementar OAuth 2.0", "Adicionar validação JWT", "Configurar rate limiting"))
                         .severityScore(9)
@@ -109,7 +111,7 @@ public class TestController {
                 GeneratedRecommendation.builder()
                         .id("rec-1")
                         .description("Implementar padrão circuit breaker")
-                        .targetComponent("API Gateway")
+                        .targetComponent(API_GATEWAY)
                         .type("RESILIENCE")
                         .priority("HIGH")
                         .rationale("Previne falhas em cascata entre serviços")
