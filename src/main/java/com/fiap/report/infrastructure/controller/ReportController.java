@@ -34,7 +34,6 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/reports")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"})
 public class ReportController {
 
     private static final String OPERATION_TYPE = "operation.type";
