@@ -1,6 +1,8 @@
 package com.fiap.report.infrastructure.config.observability;
 
+import com.fiap.report.infrastructure.config.CorsProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -8,9 +10,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class ObservabilityWebMvcConfig implements WebMvcConfigurer {
 
     private final LoggingInterceptor loggingInterceptor;
+    private final CorsProperties corsProperties;
 
-    public ObservabilityWebMvcConfig(LoggingInterceptor loggingInterceptor) {
+    public ObservabilityWebMvcConfig(LoggingInterceptor loggingInterceptor, CorsProperties corsProperties) {
         this.loggingInterceptor = loggingInterceptor;
+        this.corsProperties = corsProperties;
     }
 
     @Override
@@ -18,5 +22,15 @@ public class ObservabilityWebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(loggingInterceptor)
                 .addPathPatterns("/**")
                 .excludePathPatterns("/actuator/**");
+    }
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOriginPatterns(corsProperties.getAllowedOrigins().toArray(new String[0]))
+                .allowedMethods(corsProperties.getAllowedMethods().toArray(new String[0]))
+                .allowedHeaders(corsProperties.getAllowedHeaders().toArray(new String[0]))
+                .allowCredentials(corsProperties.isAllowCredentials())
+                .maxAge(corsProperties.getMaxAge());
     }
 }
