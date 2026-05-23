@@ -1,6 +1,6 @@
 # Configure the environment as 'homologation'
 locals {
-  environment = "dev"
+  environment = "homologation"
 }
 
 # Get current AWS account ID for SQS queue URLs
