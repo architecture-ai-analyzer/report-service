@@ -1,0 +1,15 @@
+package com.fiap.report.infrastructure.config;
+
+import com.fiap.report.gateway.StatusGateway;
+import com.fiap.report.infrastructure.gateway.impl.ObservedStatusGateway;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class GatewayConfig {
+
+    @Bean
+    public StatusGateway statusGateway(ObservedStatusGateway observedStatusGateway) {
+        return observedStatusGateway;
+    }
+}
